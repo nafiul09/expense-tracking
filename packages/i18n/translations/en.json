@@ -1,0 +1,1049 @@
+{
+	"admin": {
+		"backToWorkspace": "Back to Workspace",
+		"menu": {
+			"dashboard": "Dashboard",
+			"organizations": "Workspaces",
+			"workspaces": "Workspaces",
+			"users": "Users"
+		},
+		"dashboard": {
+			"title": "Admin Dashboard",
+			"description": "Overview of your application statistics",
+			"stats": {
+				"totalUsers": "Total Users",
+				"totalUsersDesc": "Total registered users",
+				"freeUsers": "Free Users",
+				"freeUsersDesc": "Users on free plan",
+				"paidUsers": "Paid Users",
+				"paidUsersDesc": "Users with active payments",
+				"lifetimeUsers": "Lifetime Users",
+				"lifetimeUsersDesc": "Users with lifetime access",
+				"subscriptionUsers": "Subscription Users",
+				"subscriptionUsersDesc": "Users with active subscriptions"
+			},
+			"filters": {
+				"last24h": "Last 24 hours",
+				"last7d": "Last 7 days",
+				"last30d": "Last 30 days",
+				"allTime": "All time"
+			}
+		},
+		"organizations": {
+			"backToList": "Back to workspaces",
+			"confirmDelete": {
+				"confirm": "Delete",
+				"message": "Are you sure you want to delete this workspace? This action cannot be undone.",
+				"title": "Delete workspace"
+			},
+			"create": "Create",
+			"delete": "Delete",
+			"deleteOrganization": {
+				"deleted": "Workspace has been deleted successfully!",
+				"deleting": "Deleting workspace...",
+				"notDeleted": "Workspace could not be deleted. Please try again."
+			},
+			"edit": "Edit",
+			"form": {
+				"createTitle": "Create a workspace",
+				"name": "Workspace name",
+				"notifications": {
+					"error": "Could not save the workspace. Please try again later.",
+					"success": "Workspace has been saved."
+				},
+				"save": "Save",
+				"updateTitle": "Edit workspace"
+			},
+			"loading": "Loading workspaces...",
+			"membersCount": "{count} {count, plural, one {member} other {members}}",
+			"search": "Search for a workspace...",
+			"title": "Manage workspaces"
+		},
+		"title": "Administration",
+		"users": {
+			"confirmDelete": {
+				"confirm": "Delete",
+				"message": "Are you sure you want to delete this user? This action cannot be undone.",
+				"title": "Delete user"
+			},
+			"delete": "Delete",
+			"deleteUser": {
+				"deleted": "User has been deleted successfully!",
+				"deleting": "Deleting user...",
+				"notDeleted": "User could not be deleted. Please try again."
+			},
+			"emailVerified": {
+				"verified": "Email verified",
+				"waiting": "Email waiting for verification"
+			},
+			"impersonate": "Impersonate",
+			"impersonation": {
+				"impersonating": "Impersonating as {name}..."
+			},
+			"loading": "Loading users...",
+			"resendVerificationMail": {
+				"error": "Could not resend verification mail. Please try again.",
+				"submitting": "Resending verification mail...",
+				"success": "Verification mail has been sent.",
+				"title": "Resend verification mail"
+			},
+			"search": "Search for name or email...",
+			"title": "Manage users",
+			"assignAdminRole": "Assign admin role",
+			"removeAdminRole": "Remove admin role"
+		},
+		"description": "Manage your application."
+	},
+	"app": {
+		"menu": {
+			"accountSettings": "Account settings",
+			"admin": "Admin",
+			"organizationSettings": "Workspace settings",
+			"start": "Dashboard",
+			"dashboard": "Dashboard",
+			"projects": "Projects",
+			"reports": "Reports",
+			"shares": "Shares",
+			"resources": "Resources",
+			"createProject": "Create Project"
+		},
+		"sidebar": {
+			"feedback": "Feedback",
+			"share": "Share",
+			"collapse": "Collapse sidebar",
+			"expand": "Expand sidebar",
+			"upgrade": "Upgrade",
+			"viewPlan": "View Plan"
+		},
+		"userMenu": {
+			"accountSettings": "Account settings",
+			"colorMode": "Color mode",
+			"documentation": "Documentation",
+			"home": "Home",
+			"logout": "Logout"
+		}
+	},
+	"auth": {
+		"errors": {
+			"invalidEmailOrPassword": "The credentials you entered are invalid. Please check them and try again.",
+			"unknown": "Something went wrong. Please try again.",
+			"userNotFound": "This user does not exists",
+			"failedToCreateUser": "Could not create user. Please try again.",
+			"failedToCreateSession": "Could not create a session. Please try again.",
+			"failedToUpdateUser": "Could not update user. Please try again.",
+			"failedToGetSession": "Could not get the session.",
+			"invalidPassword": "The entered password is incorrect.",
+			"invalidEmail": "The entered email is invalid.",
+			"invalidToken": "The token you entered is invalid or has expired.",
+			"credentialAccountNotFound": "Account not found.",
+			"emailCanNotBeUpdated": "Email could not be updated. Please try again.",
+			"emailNotVerified": "Please verify your email first before logging in.",
+			"failedToGetUserInfo": "Could not load user information.",
+			"idTokenNotSupported": "ID token is not supported.",
+			"passwordTooLong": "Password is too long.",
+			"passwordTooShort": "Password is too short.",
+			"providerNotFound": "This provider is not suppported.",
+			"socialAccountAlreadyLinked": "This account is already linked to a user.",
+			"userEmailNotFound": "Email not found.",
+			"userAlreadyExists": "This user already exists.",
+			"invalidInvitation": "The invitation is invalid or expired.",
+			"sessionExpired": "The session has expired.",
+			"failedToUnlinkLastAccount": "Failed to unlink account",
+			"accountNotFound": "Account not found"
+		},
+		"forgotPassword": {
+			"backToSignin": "Back to signin",
+			"email": "Email",
+			"hints": {
+				"linkNotSent": {
+					"message": "We are sorry, but we were unable to send you a link to reset your password. Please try again later.",
+					"title": "Link not sent"
+				},
+				"linkSent": {
+					"message": "We have sent you a link to continue. Please check your inbox.",
+					"title": "Link sent"
+				}
+			},
+			"message": "Please enter your email address and we will send you a link to reset your password.",
+			"submit": "Send link",
+			"title": "Forgot your password?"
+		},
+		"login": {
+			"continueWith": "Or continue with",
+			"createAnAccount": "Create an account",
+			"dontHaveAnAccount": "Don't have an account yet?",
+			"forgotPassword": "Forgot password?",
+			"hints": {
+				"invalidCredentials": "The email or password you entered are invalid. Please try again.",
+				"linkSent": {
+					"message": "We have sent you a link to continue. Please check your inbox.",
+					"title": "Link sent"
+				}
+			},
+			"loginWithPasskey": "Login with passkey",
+			"modes": {
+				"magicLink": "Magic link",
+				"password": "Password"
+			},
+			"submit": "Sign in",
+			"subtitle": "Please enter your credentials to sign in.",
+			"title": "Welcome back",
+			"sendMagicLink": "Send magic link"
+		},
+		"resetPassword": {
+			"backToSignin": "Back to signin",
+			"hints": {
+				"error": "We are sorry, but we were unable to reset your password. Please try again.",
+				"success": "Your password has been reset successfully."
+			},
+			"message": "Please enter a new password.",
+			"newPassword": "New password",
+			"submit": "Reset password",
+			"title": "Reset your password"
+		},
+		"signup": {
+			"alreadyHaveAccount": "Already have an account?",
+			"email": "Email",
+			"hints": {
+				"signupFailed": "We are sorry, but we were unable to create your account. Please try again later.",
+				"verifyEmail": "We have sent you a link to verify your email. Please check your inbox."
+			},
+			"message": "We are happy that you want to join us. Please fill in the form below to create your account.",
+			"name": "Name",
+			"password": "Password",
+			"signIn": "Sign in",
+			"submit": "Create account",
+			"title": "Create an account"
+		},
+		"verify": {
+			"title": "Verify your account",
+			"code": "One-time password",
+			"submit": "Verify",
+			"backToSignin": "Back to login",
+			"message": "Enter the one-time password from your authenticator app to continue."
+		}
+	},
+	"common": {
+		"cancel": "Cancel",
+		"save": "Save",
+		"delete": "Delete",
+		"confirmation": {
+			"cancel": "Cancel",
+			"confirm": "Confirm"
+		},
+		"menu": {
+			"dashboard": "Dashboard",
+			"login": "Login",
+			"pricing": "Pricing"
+		},
+		"tableOfContents": {
+			"title": "On this page"
+		},
+		"actions": {
+			"continue": "Continue",
+			"verify": "Verify"
+		}
+	},
+	"mail": {
+		"common": {
+			"openLinkInBrowser": "If you want to open the link in a different browser than your default one, copy and paste this link:",
+			"otp": "One-time password",
+			"useLink": "or use the following link:"
+		},
+		"emailVerification": {
+			"body": "Hey,\nplease click the link below to verify this new email address.",
+			"confirmEmail": "Verify email",
+			"subject": "Verify your email"
+		},
+		"forgotPassword": {
+			"body": "Hey,\nyou requested a password reset.\n\nClick the button below to reset your password.",
+			"resetPassword": "Reset password",
+			"subject": "Reset your password"
+		},
+		"magicLink": {
+			"body": "Hey,\nyou requested a login email from WebClarity.\n\nClick the link below to login.",
+			"login": "Login",
+			"subject": "Login to WebClarity"
+		},
+		"newUser": {
+			"body": "Hey,\nthanks for signing up for WebClarity.\n\nTo start using our app, please confirm your email address by clicking the link below.",
+			"confirmEmail": "Confirm email",
+			"subject": "Confirm your email"
+		},
+		"organizationInvitation": {
+			"body": "You have been invited to join the workspace {organizationName}. Click the button below or copy and paste the link into your browser of choice to accept the invitation and join the workspace.",
+			"headline": "Join the workspace {organizationName}",
+			"join": "Join the workspace",
+			"subject": "You have been invited to join a workspace"
+		}
+	},
+	"onboarding": {
+		"account": {
+			"avatar": "Avatar",
+			"avatarDescription": "Click the circle or drop an image to it to upload your avatar.",
+			"name": "Name"
+		},
+		"continue": "Continue",
+		"message": "Let's set up your first workspace to get started.",
+		"notifications": {
+			"accountSetupFailed": "We are sorry, but we were unable to set up your account. Please try again later."
+		},
+		"step": "Step {step} / {total}",
+		"title": "Create your workspace",
+		"workspaceName": "Workspace name",
+		"workspaceNamePlaceholder": "My Workspace"
+	},
+	"organizations": {
+		"createForm": {
+			"cancel": "Cancel",
+			"logo": {
+				"ariaLabel": "Upload workspace logo",
+				"description": "Drag and drop or choose file to upload.",
+				"dropHere": "Drop here",
+				"formats": "Supported formats: PNG, JPG, WebP • Max file size: 1 MB",
+				"remove": "Remove logo",
+				"upload": "Upload",
+				"uploadErrors": {
+					"fileTooLarge": "File size must be less than 1 MB. Please choose a smaller image.",
+					"invalidType": "Invalid file type. Please upload a PNG, JPG, or WebP image.",
+					"uploadFailed": "Failed to upload image. Please try again."
+				}
+			},
+			"name": "Workspace name*",
+			"notifications": {
+				"error": "We are sorry, but we were unable to create your workspace. Please try again later.",
+				"success": "Your workspace has been created. You can now invite members."
+			},
+			"submit": "Create workspace",
+			"subtitle": "Enter a name for your workspace to get started. You can change the name later in the workspace settings.",
+			"title": "Create a workspace"
+		},
+		"invitationAlert": {
+			"description": "You need to sign in or create an account to join the workspace.",
+			"title": "You have been invited to join a workspace."
+		},
+		"invitationModal": {
+			"accept": "Accept",
+			"decline": "Decline",
+			"description": "You have been invited to join the workspace {organizationName}. Do you want to accept the invitation and join the workspace?",
+			"title": "Join the workspace"
+		},
+		"organizationSelect": {
+			"createNewOrganization": "Create new workspace",
+			"organizations": "Workspaces",
+			"personalAccount": "Personal account"
+		},
+		"organizationsGrid": {
+			"createNewOrganization": "Create new workspace",
+			"title": "Your workspaces"
+		},
+		"roles": {
+			"admin": "Admin",
+			"member": "Member",
+			"owner": "Owner"
+		},
+		"settings": {
+			"changeName": {
+				"title": "Workspace name"
+			},
+			"deleteOrganization": {
+				"confirmation": "Are you sure you want to delete your workspace?",
+				"description": "Permanently delete your workspace. Once you delete your workspace, there is no going back. To confirm, please enter your password below:",
+				"submit": "Delete workspace",
+				"title": "Delete workspace"
+			},
+			"logo": {
+				"description": "Upload a logo for your workspace.",
+				"title": "Workspace logo"
+			},
+			"members": {
+				"activeMembers": "Active members",
+				"description": "See all active members and the pending invites of your workspace.",
+				"invitations": {
+					"empty": "You have not invited any members yet.",
+					"expiresAt": "Expires at {date}",
+					"invitationStatus": {
+						"accepted": "Accepted",
+						"canceled": "Canceled",
+						"pending": "Pending",
+						"rejected": "Rejected"
+					},
+					"revoke": "Revoke invitation",
+					"resend": "Resend invitation"
+				},
+				"inviteMember": {
+					"description": "To invite a new member, send them an invitation.",
+					"email": "Email",
+					"notifications": {
+						"error": {
+							"description": "We were unable to invite the member. Please try again later.",
+							"title": "Could not invite member"
+						},
+						"success": {
+							"description": "The member has been invited.",
+							"title": "Member invited"
+						}
+					},
+					"role": "Role",
+					"submit": "Invite",
+					"title": "Invite member"
+				},
+				"leaveOrganization": "Leave workspace",
+				"notifications": {
+					"removeMember": {
+						"error": {
+							"description": "Could not remove the member from your workspace. Please try again."
+						},
+						"loading": {
+							"description": "Removing member from workspace..."
+						},
+						"success": {
+							"description": "The member has been successfully removed from your workspace."
+						}
+					},
+					"revokeInvitation": {
+						"error": {
+							"description": "The invitation could not be revoked. Please try again later."
+						},
+						"loading": {
+							"description": "Revoking invitation..."
+						},
+						"success": {
+							"description": "The invitation has been revoked."
+						}
+					},
+					"updateMembership": {
+						"error": {
+							"description": "Could not update workspace membership. Please try again."
+						},
+						"loading": {
+							"description": "Updating membership..."
+						},
+						"success": {
+							"description": "Membership was updated successfully"
+						}
+					},
+					"resendInvitation": {
+						"loading": {
+							"description": "Resending invitation..."
+						},
+						"success": {
+							"description": "Invitation sent"
+						},
+						"error": {
+							"description": "Could not sent invitation. Please try again."
+						}
+					}
+				},
+				"pendingInvitations": "Pending invitations",
+				"removeMember": "Remove member",
+				"title": "Members"
+			},
+			"notifications": {
+				"organizationDeleted": "Your workspace has been deleted.",
+				"organizationNameNotUpdated": "We were unable to update your workspace name. Please try again later.",
+				"organizationNameUpdated": "Your workspace name has been updated.",
+				"organizationNotDeleted": "We were unable to delete your workspace. Please try again later."
+			},
+			"subtitle": "Manage the settings of the workspace.",
+			"title": "Workspace",
+			"dangerZone": {
+				"title": "Danger zone"
+			}
+		},
+		"start": {
+			"subtitle": "Welcome to the start page of this workspace!"
+		}
+	},
+	"pricing": {
+		"choosePlan": "Choose plan",
+		"contactSales": "Contact sales",
+		"description": "Choose the plan that works best for you.",
+		"getStarted": "Get started",
+		"month": "{count, plural, one {month} other {{count} months}}",
+		"monthly": "Monthly",
+		"products": {
+			"basic": {
+				"description": "Perfect to small teams.",
+				"features": {
+					"anotherFeature": "Another amazing feature",
+					"limitedSupport": "Limited support"
+				},
+				"title": "Basic"
+			},
+			"enterprise": {
+				"description": "Custom plan tailored to your requirements",
+				"features": {
+					"enterpriseSupport": "Enterprise support",
+					"unlimitedProjects": "Unlimited projects"
+				},
+				"title": "Enterprise"
+			},
+			"free": {
+				"description": "Start for free",
+				"features": {
+					"anotherFeature": "Another amazing feature",
+					"limitedSupport": "Limited support"
+				},
+				"title": "Free"
+			},
+			"lifetime": {
+				"description": "Buy once. Use forever.",
+				"features": {
+					"extendSupport": "Extended support",
+					"noRecurringCosts": "No recurring costs"
+				},
+				"title": "Lifetime"
+			},
+			"pro": {
+				"description": "Best for teams",
+				"features": {
+					"anotherFeature": "Another amazing feature",
+					"fiveMembers": "Up to 5 members",
+					"fullSupport": "Full support"
+				},
+				"title": "Pro"
+			}
+		},
+		"purchase": "Purchase",
+		"recommended": "Recommended",
+		"subscribe": "Subscribe",
+		"title": "Pricing",
+		"trialPeriod": "{days} {days, plural, one {day} other {days}} free trial",
+		"year": "{count, plural, one {year} other {{count} years}}",
+		"yearly": "Yearly",
+		"perSeat": "seat"
+	},
+	"settings": {
+		"account": {
+			"avatar": {
+				"description": "To change your avatar click the picture in this block and select a file from your computer to upload.",
+				"notifications": {
+					"error": "Could not update avatar",
+					"success": "Avatar was updated successfully"
+				},
+				"title": "Your avatar"
+			},
+			"changeEmail": {
+				"description": "To change your email, enter the new email and hit save. You will have to confirm the new email before it will become active.",
+				"notifications": {
+					"error": "Could not update email",
+					"success": "Email was updated successfully"
+				},
+				"title": "Your email"
+			},
+			"changeName": {
+				"notifications": {
+					"error": "Could not update name",
+					"success": "Name was updated successfully"
+				},
+				"title": "Your name"
+			},
+			"deleteAccount": {
+				"confirmation": "Are you sure you want to delete your account?",
+				"description": "Permanently delete your account. Once you delete your account, there is no going back. To confirm, please enter your password below:",
+				"notifications": {
+					"error": "Could not delete account",
+					"success": "Account was deleted successfully"
+				},
+				"submit": "Delete account",
+				"title": "Delete account"
+			},
+			"language": {
+				"description": "To change the language of the app for your account, select a language from the list and click save.",
+				"notifications": {
+					"error": "Could not update language",
+					"success": "Language was updated successfully"
+				},
+				"title": "Your language"
+			},
+			"security": {
+				"activeSessions": {
+					"description": "These are all the active sessions of your account. Click the X to end a specifc session.",
+					"title": "Active sessions",
+					"notifications": {
+						"revokeSession": {
+							"success": "Session revoked"
+						}
+					},
+					"currentSession": "Current session"
+				},
+				"changePassword": {
+					"currentPassword": "Current password",
+					"newPassword": "New password",
+					"notifications": {
+						"error": "Could not update password",
+						"success": "Password was updated successfully"
+					},
+					"title": "Your password"
+				},
+				"connectedAccounts": {
+					"connect": "Connect",
+					"disconnect": "Disconnect",
+					"title": "Connected accounts"
+				},
+				"passkeys": {
+					"description": "Use passkeys as a secure alternative to passwords.",
+					"notifications": {
+						"addPasskey": {
+							"error": {
+								"title": "Could not add passkey"
+							},
+							"success": {
+								"title": "Passkey added"
+							}
+						},
+						"deletePasskey": {
+							"error": {
+								"title": "Could not delete passkey"
+							},
+							"loading": {
+								"title": "Deleting passkey..."
+							},
+							"success": {
+								"title": "Passkey deleted"
+							}
+						}
+					},
+					"title": "Passkeys"
+				},
+				"setPassword": {
+					"description": "You have not set a password yet. To set one, you need to go through the password reset flow. Click the button below to send an email to reset your password and follow the instructions in the email.",
+					"notifications": {
+						"error": "Could not send link to set password. Please try again.",
+						"success": "Check your inbox for the link to set your password."
+					},
+					"submit": "Set password",
+					"title": "Your password"
+				},
+				"title": "Security",
+				"twoFactor": {
+					"title": "Two-factor authentication",
+					"description": "Add an extra layer of security to your account.",
+					"dialog": {
+						"password": {
+							"title": "Verify with password",
+							"description": "Please verify your account by entering your password:",
+							"label": "Your password:"
+						},
+						"totpUrl": {
+							"description": "Use your preferred authenticator app and scan the QR code with it or enter the secret below manually to set up two-factor authentication.",
+							"code": "Enter 6-digit code to verify the setup:",
+							"title": "Enable two-factor authentication"
+						}
+					},
+					"enable": "Enable two-factor authentication",
+					"notifications": {
+						"verify": {
+							"success": {
+								"title": "Two-factor authentication has been enabled successfully."
+							}
+						},
+						"enable": {
+							"error": {
+								"title": "Could not verify your account with the provided password. Please try again."
+							}
+						},
+						"disable": {
+							"success": {
+								"title": "Two-factor authentication has been disabled successfully."
+							}
+						}
+					},
+					"disable": "Disable two-factor authentication",
+					"enabled": "You have two-factor authentication enabled for your account."
+				}
+			},
+			"subtitle": "Manage the settings of your personal account.",
+			"title": "Account settings"
+		},
+		"billing": {
+			"createCustomerPortal": {
+				"label": "Manage billing",
+				"notifications": {
+					"error": {
+						"title": "Could not create a customer portal session. Please try again."
+					}
+				}
+			},
+			"activePlan": {
+				"status": {
+					"active": "Active",
+					"canceled": "Canceled",
+					"expired": "Expired",
+					"incomplete": "Incomplete",
+					"past_due": "Past due",
+					"paused": "Paused",
+					"trialing": "Trialing",
+					"unpaid": "Unpaid"
+				},
+				"title": "Your plan"
+			},
+			"changePlan": {
+				"description": "Choose a plan to subscribe to.",
+				"title": "Change your plan"
+			},
+			"title": "Billing"
+		},
+		"menu": {
+			"account": {
+				"billing": "Billing",
+				"dangerZone": "Danger zone",
+				"general": "General",
+				"security": "Security",
+				"title": "Account"
+			},
+			"organization": {
+				"billing": "Billing",
+				"general": "General",
+				"members": "Members",
+				"title": "Workspace",
+				"dangerZone": "Danger zone",
+				"usage": "Usage & Limits"
+			}
+		},
+		"save": "Save"
+	},
+	"usage": {
+		"title": "Usage & Limits",
+		"description": "Track your workspace usage across all features.",
+		"metrics": {
+			"shares": "Shares",
+			"projects": "Projects",
+			"aiAnalyses": "AI Analyses"
+		},
+		"unlimited": "Unlimited",
+		"current": "{current} of {limit}",
+		"currentUnlimited": "{current} used",
+		"percentage": "{percentage}% used",
+		"upgrade": "Upgrade",
+		"blocked": {
+			"badge": "Limit Reached",
+			"title": "Usage Limit Reached",
+			"message": "You've reached your {metricType} limit ({limit}). Upgrade your plan to create more.",
+			"upgrade": "Upgrade Plan",
+			"viewUsage": "View Usage Details"
+		},
+		"warning": {
+			"title": "Approaching Usage Limit",
+			"message": "You've used {percentage}% of your {metricType} limit. Consider upgrading to avoid interruptions.",
+			"continue": "Continue Anyway",
+			"upgrade": "Upgrade Plan"
+		}
+	},
+	"start": {
+		"subtitle": "See the latest stats of your awesome business.",
+		"welcome": "Welcome {name}!"
+	},
+	"zod": {
+		"errors": {
+			"invalid_arguments": "Invalid function arguments",
+			"invalid_date": "Invalid date",
+			"invalid_enum_value": "Invalid enum value. Expected {- options}, received '{received}'",
+			"invalid_intersection_types": "Intersection results could not be merged",
+			"invalid_literal": "Invalid literal value, expected {expected}",
+			"invalid_return_type": "Invalid function return type",
+			"invalid_string": {
+				"cuid": "Invalid {validation}",
+				"datetime": "Invalid {validation}",
+				"email": "Invalid {validation}",
+				"endsWith": "Invalid input: must end with \"{endsWith}\"",
+				"regex": "Invalid",
+				"startsWith": "Invalid input: must start with \"{startsWith}\"",
+				"url": "Invalid {validation}",
+				"uuid": "Invalid {validation}"
+			},
+			"invalid_type": "Expected {expected}, received {received}",
+			"invalid_type_received_undefined": "Required",
+			"invalid_union": "Invalid input",
+			"invalid_union_discriminator": "Invalid discriminator value. Expected {- options}",
+			"not_finite": "Number must be finite",
+			"not_multiple_of": "Number must be a multiple of {multipleOf}",
+			"too_big": {
+				"array": {
+					"exact": "Array must contain exactly {maximum} element(s)",
+					"inclusive": "Array must contain at most {maximum} element(s)",
+					"not_inclusive": "Array must contain less than {maximum} element(s)"
+				},
+				"date": {
+					"exact": "Date must be exactly {- maximum, datetime}",
+					"inclusive": "Date must be smaller than or equal to {- maximum, datetime}",
+					"not_inclusive": "Date must be smaller than {- maximum, datetime}"
+				},
+				"number": {
+					"exact": "Number must be exactly {maximum}",
+					"inclusive": "Number must be less than or equal to {maximum}",
+					"not_inclusive": "Number must be less than {maximum}"
+				},
+				"set": {
+					"exact": "Invalid input",
+					"inclusive": "Invalid input",
+					"not_inclusive": "Invalid input"
+				},
+				"string": {
+					"exact": "String must contain exactly {maximum} character(s)",
+					"inclusive": "String must contain at most {maximum} character(s)",
+					"not_inclusive": "String must contain under {maximum} character(s)"
+				}
+			},
+			"too_small": {
+				"array": {
+					"exact": "Array must contain exactly {minimum} element(s)",
+					"inclusive": "Array must contain at least {minimum} element(s)",
+					"not_inclusive": "Array must contain more than {minimum} element(s)"
+				},
+				"date": {
+					"exact": "Date must be exactly {- minimum, datetime}",
+					"inclusive": "Date must be greater than or equal to {- minimum, datetime}",
+					"not_inclusive": "Date must be greater than {- minimum, datetime}"
+				},
+				"number": {
+					"exact": "Number must be exactly {minimum}",
+					"inclusive": "Number must be greater than or equal to {minimum}",
+					"not_inclusive": "Number must be greater than {minimum}"
+				},
+				"set": {
+					"exact": "Invalid input",
+					"inclusive": "Invalid input",
+					"not_inclusive": "Invalid input"
+				},
+				"string": {
+					"exact": "String must contain exactly {minimum} character(s)",
+					"inclusive": "String must contain at least {minimum} character(s)",
+					"not_inclusive": "String must contain over {minimum} character(s)"
+				}
+			},
+			"unrecognized_keys": "Unrecognized key(s) in object: {- keys}"
+		},
+		"types": {
+			"array": "array",
+			"bigint": "bigint",
+			"boolean": "boolean",
+			"date": "date",
+			"float": "float",
+			"function": "function",
+			"integer": "integer",
+			"map": "map",
+			"nan": "nan",
+			"never": "never",
+			"null": "null",
+			"number": "number",
+			"object": "object",
+			"promise": "promise",
+			"set": "set",
+			"string": "string",
+			"symbol": "symbol",
+			"undefined": "undefined",
+			"unknown": "unknown",
+			"void": "void"
+		},
+		"validations": {
+			"cuid": "cuid",
+			"cuid2": "cuid2",
+			"datetime": "datetime",
+			"email": "email",
+			"emoji": "emoji",
+			"ip": "up",
+			"regex": "regex",
+			"ulid": "ulid",
+			"url": "url",
+			"uuid": "uuid"
+		}
+	},
+	"choosePlan": {
+		"title": "Choose your plan",
+		"description": "To continue, please select a plan."
+	},
+	"share": {
+		"headingStructure": {
+			"title": "Heading Structure",
+			"sharedFrom": "Shared heading structure from",
+			"expires": "Expires",
+			"summary": {
+				"title": "Summary",
+				"totalHeadings": "Total Headings",
+				"criticalIssues": "Critical Issues",
+				"warnings": "Warnings",
+				"noIssues": "No Issues"
+			},
+			"hierarchy": {
+				"title": "Heading Hierarchy",
+				"orphanedHeadings": "Orphaned Headings",
+				"orphanedHeadingsFound": "{count} found before H1",
+				"mainContentStructure": "Main Content Structure",
+				"noHeadingsFound": "No headings found on this page.",
+				"emptyHeading": "(Empty heading)",
+				"viewCssSelector": "View CSS selector",
+				"close": "Close"
+			},
+			"issues": {
+				"noIssues": "No issues",
+				"labels": {
+					"skip": "Level skip",
+					"orphan": "Orphaned",
+					"short": "Too short",
+					"long": "Too long",
+					"empty": "Empty",
+					"multipleH1": "Multiple H1",
+					"missingH1": "Missing H1"
+				}
+			},
+			"legend": {
+				"title": "Issue Legend",
+				"criticalIssues": {
+					"title": "Critical Issues",
+					"levelSkip": "Level skip: Heading levels should not skip",
+					"orphaned": "Orphaned: Heading without proper parent",
+					"empty": "Empty: Heading has no text content",
+					"multipleH1": "Multiple H1: Only one H1 per page recommended",
+					"missingH1": "Missing H1: Page should have exactly one H1"
+				},
+				"warnings": {
+					"title": "Warnings",
+					"tooShort": "Too short: Very short heading text",
+					"tooLong": "Too long: Very long heading text"
+				}
+			},
+			"infoModal": {
+				"title": "Understanding Heading Issues",
+				"subtitle": "Learn about heading structure issues and how to fix them",
+				"colorGuide": {
+					"title": "Color Guide",
+					"red": "Red",
+					"redDescription": "Critical errors that must be fixed (affects SEO and accessibility)",
+					"orange": "Orange",
+					"orangeDescription": "Warnings that should be reviewed (best practice issues)",
+					"green": "Green",
+					"greenDescription": "No issues detected (following best practices)"
+				},
+				"commonIssues": {
+					"title": "Common Heading Issues",
+					"fix": "How to Fix",
+					"empty": {
+						"title": "Empty Heading",
+						"description": "A heading tag exists but contains no text content. This provides no value to users or search engines.",
+						"fix": "Add descriptive text to the heading or remove the empty tag entirely."
+					},
+					"short": {
+						"title": "Short Heading (&lt; 10 characters)",
+						"description": "Heading text is too short to be descriptive. While not always wrong, very short headings may lack context.",
+						"fix": "Consider adding more descriptive text to clearly communicate the section's content."
+					},
+					"long": {
+						"title": "Long Heading (&gt; 70 characters)",
+						"description": "Heading text is very long. This can be hard to scan and may indicate the content should be split.",
+						"fix": "Break down into shorter, more scannable headings or move extra detail into paragraph text."
+					},
+					"skip": {
+						"title": "Skipped Heading Level",
+						"description": "Heading levels should follow sequential order (H1 → H2 → H3). Skipping levels (e.g., H1 → H3) breaks the document outline and confuses screen readers.",
+						"fix": "Adjust heading levels to follow proper hierarchy. Don't skip from H1 directly to H3 without an H2 in between."
+					},
+					"orphan": {
+						"title": "Orphaned Heading",
+						"description": "A heading appears before the H1 tag or without a proper parent in the hierarchy. This breaks the document outline that search engines use to understand your page structure.",
+						"fix": "For headings appearing before H1: Convert them to non-heading elements like &lt;div&gt;, &lt;p&gt;, or &lt;span&gt; and apply CSS classes to maintain styling. For headings without proper parents: Ensure H2s are under H1, H3s under H2, etc.",
+						"solution": {
+							"title": "SEO Solution",
+							"description": "These headings appear before your H1 and break the document outline. For better SEO, convert them to non-heading elements:",
+							"recommendedLabel": "Recommended conversion:",
+							"stylingNote": "Keep the styling: Apply CSS classes to maintain the visual appearance."
+						}
+					},
+					"multipleH1": {
+						"title": "Multiple H1 Tags",
+						"description": "Multiple H1 tags were found on the page. While technically valid in HTML5, having one H1 per page is an SEO best practice.",
+						"fix": "Use only one H1 tag for the main page title. Convert additional H1s to H2 or other appropriate levels."
+					}
+				},
+				"bestPractices": {
+					"title": "Best Practices",
+					"item1": "Use only one H1 per page (typically the page title or main heading)",
+					"item2": "Follow sequential heading levels (H1 → H2 → H3, don't skip)",
+					"item3": "Make headings descriptive and meaningful (10-70 characters is ideal)",
+					"item4": "Use headings to create a logical document outline for both users and search engines"
+				}
+			},
+			"footer": {
+				"copyright": "©{year} WebClarity. All rights reserved.",
+				"website": "webclarity.ai"
+			}
+		},
+		"styleGuide": {
+			"title": "Style Guide",
+			"typography": "Typography",
+			"colors": "Colors",
+			"sharedFrom": "Shared style guide from",
+			"expires": "Expires",
+			"typographySection": {
+				"fontFamily": "Font Family",
+				"fontSizes": "Font Sizes",
+				"lineHeight": "Line Height:",
+				"letterSpacing": "Letter Spacing:"
+			},
+			"colorsSection": {
+				"backgrounds": "Backgrounds Color",
+				"typography": "Typography Color",
+				"border": "Border Color",
+				"icon": "Icon Color"
+			},
+			"fontWeights": {
+				"100": "Thin",
+				"200": "Extra Light",
+				"300": "Light",
+				"400": "Regular",
+				"500": "Medium",
+				"600": "Semi-Bold",
+				"700": "Bold",
+				"800": "Extra Bold",
+				"900": "Black"
+			},
+			"footer": {
+				"copyright": "©{year} WebClarity. All rights reserved.",
+				"website": "webclarity.ai"
+			}
+		}
+	},
+	"shares": {
+		"title": "Shares",
+		"description": "Manage all shares created by your workspace",
+		"createShare": "Create Share",
+		"myShares": "My Shares",
+		"allShares": "All Shares",
+		"allTypes": "All Types",
+		"noShares": "No shares yet",
+		"noSharesDescription": "Create your first share using the browser extension",
+		"viewCount": "{count, plural, =0 {No views} =1 {1 view} other {# views}}",
+		"expiresIn": "Expires in {time}",
+		"expired": "Expired",
+		"active": "Active",
+		"renew": "Renew Share",
+		"renewDescription": "Extend expiry by 7 days",
+		"rename": "Rename",
+		"renameDescription": "Change the title of this share",
+		"titlePlaceholder": "Enter share title",
+		"delete": "Delete Share",
+		"confirmDelete": "Are you sure you want to delete \"{title}\"? This action cannot be undone.",
+		"copyLink": "Copy Link",
+		"linkCopied": "Link copied to clipboard",
+		"view": "View",
+		"copy": "Copy",
+		"copied": "Copied",
+		"limitReached": "Share limit reached ({current}/{limit}). Upgrade to create more.",
+		"expiredMessage": "This share expired on {date}.",
+		"expiredAction": "Contact your workspace owner to renew it.",
+		"renewSuccess": "Share renewed successfully. Expires in 7 days.",
+		"createdBy": "Created by {name}",
+		"styleGuide": "Style Guide",
+		"headingStructure": "Heading Structure",
+		"searchPlaceholder": "Search shares...",
+		"searchTabs": {
+			"all": "All",
+			"shares": "Shares"
+		},
+		"searchMinChars": "Type at least 2 characters to search",
+		"recentShares": "Recent Shares",
+		"noResults": "No results found",
+		"searchInShares": "Search in shares..."
+	}
+}
