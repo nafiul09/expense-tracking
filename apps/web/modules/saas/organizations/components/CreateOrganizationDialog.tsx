@@ -1,16 +1,16 @@
 "use client";
 
-import { authClient } from "@repo/auth/client";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { authClient } from "@repo/auth/client";
 import { useActiveOrganization } from "@saas/organizations/hooks/use-active-organization";
 import {
 	organizationListQueryKey,
 	useCreateOrganizationMutation,
 } from "@saas/organizations/lib/api";
-import { useRouter } from "@shared/hooks/router";
 import { Spinner } from "@shared/components/Spinner";
+import { useRouter } from "@shared/hooks/router";
 import { orpc } from "@shared/lib/orpc-query-utils";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@ui/components/button";
 import {
 	Dialog,
@@ -30,14 +30,14 @@ import {
 } from "@ui/components/form";
 import { Input } from "@ui/components/input";
 import { Label } from "@ui/components/label";
-import { useTranslations } from "next-intl";
+import { ImageIcon, UploadIcon } from "lucide-react";
 import Image from "next/image";
-import { useForm } from "react-hook-form";
-import { useState, useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { UploadIcon, ImageIcon } from "lucide-react";
 import { CropImageDialog } from "../../settings/components/CropImageDialog";
 
 const formSchema = z.object({
@@ -166,7 +166,7 @@ export function CreateOrganizationDialog({
 				method: "PUT",
 				body: logoBlob,
 				headers: {
-					"Content-Type": "image/png",
+					"Content-Type": logoBlob.type || "image/webp",
 				},
 			});
 

@@ -2,10 +2,11 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { authClient } from "@repo/auth/client";
-import { useCreateOrganizationMutation } from "@saas/organizations/lib/api";
 import { useActiveOrganization } from "@saas/organizations/hooks/use-active-organization";
+import { useCreateOrganizationMutation } from "@saas/organizations/lib/api";
 import { Spinner } from "@shared/components/Spinner";
 import { orpc } from "@shared/lib/orpc-query-utils";
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "@ui/components/button";
 import {
 	Form,
@@ -17,10 +18,9 @@ import {
 } from "@ui/components/form";
 import { Input } from "@ui/components/input";
 import { Label } from "@ui/components/label";
-import { useMutation } from "@tanstack/react-query";
 import { ArrowRightIcon, ImageIcon, UploadIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import type { SubmitHandler } from "react-hook-form";
@@ -133,7 +133,7 @@ export function OnboardingStep1({ onCompleted }: { onCompleted: () => void }) {
 				method: "PUT",
 				body: logoBlob,
 				headers: {
-					"Content-Type": "image/png",
+					"Content-Type": logoBlob.type || "image/webp",
 				},
 			});
 

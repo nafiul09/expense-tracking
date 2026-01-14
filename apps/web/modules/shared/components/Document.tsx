@@ -17,8 +17,16 @@ export async function Document({
 	children,
 	locale,
 }: PropsWithChildren<{ locale: string }>) {
-	const cookieStore = await cookies();
-	const consentCookie = cookieStore.get("consent");
+	let initialConsent = false;
+	try {
+		const cookieStore = await cookies();
+		const consentCookie = cookieStore.get("consent");
+		initialConsent = consentCookie?.value === "true";
+	} catch (error) {
+		// If cookies() fails (e.g., in static generation or edge runtime),
+		// default to false - user will see the consent banner
+		console.warn("Failed to read consent cookie:", error);
+	}
 
 	return (
 		<html
@@ -33,9 +41,7 @@ export async function Document({
 				suppressHydrationWarning
 			>
 				<NuqsAdapter>
-					<ConsentProvider
-						initialConsent={consentCookie?.value === "true"}
-					>
+					<ConsentProvider initialConsent={initialConsent}>
 						<ClientProviders>{children}</ClientProviders>
 					</ConsentProvider>
 				</NuqsAdapter>

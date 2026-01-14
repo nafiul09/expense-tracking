@@ -34,6 +34,7 @@ export function UserAvatarUpload({
 		accept: {
 			"image/png": [".png"],
 			"image/jpeg": [".jpg", ".jpeg"],
+			"image/webp": [".webp"],
 		},
 		multiple: false,
 	});
@@ -55,7 +56,7 @@ export function UserAvatarUpload({
 				method: "PUT",
 				body: croppedImageData,
 				headers: {
-					"Content-Type": "image/png",
+					"Content-Type": croppedImageData.type || "image/png",
 				},
 			});
 

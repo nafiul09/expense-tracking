@@ -58,12 +58,22 @@ export const getSignedUploadUrl: GetSignedUploadUrlHandler = async (
 ) => {
 	const s3Client = getS3Client();
 	try {
+		// Detect content type from file extension
+		let contentType = "image/png";
+		if (path.endsWith(".jpg") || path.endsWith(".jpeg")) {
+			contentType = "image/jpeg";
+		} else if (path.endsWith(".webp")) {
+			contentType = "image/webp";
+		} else if (path.endsWith(".png")) {
+			contentType = "image/png";
+		}
+
 		return await getS3SignedUrl(
 			s3Client,
 			new PutObjectCommand({
 				Bucket: bucket,
 				Key: path,
-				ContentType: "image/jpeg",
+				ContentType: contentType,
 			}),
 			{
 				expiresIn: 60,

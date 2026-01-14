@@ -34,7 +34,7 @@ export function CropImageDialog({
 					maxWidth: 256,
 					maxHeight: 256,
 				})
-				.toBlob(resolve);
+				.toBlob(resolve, "image/webp", 0.9);
 		});
 
 		return imageBlob;

@@ -12,8 +12,9 @@ export const createAvatarUploadUrl = protectedProcedure
 			"Create a signed upload URL to upload an avatar image to the storage bucket",
 	})
 	.handler(async ({ context: { user } }) => {
-		const path = `${user.id}.png`;
-		const signedUploadUrl = await getSignedUploadUrl(`${user.id}.png`, {
+		// Use webp for better compression and quality
+		const path = `${user.id}.webp`;
+		const signedUploadUrl = await getSignedUploadUrl(path, {
 			bucket: config.storage.bucketNames.avatars,
 		});
 

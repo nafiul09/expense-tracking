@@ -36,7 +36,7 @@ export const createLogoUploadUrl = protectedProcedure
 			throw new ORPCError("FORBIDDEN");
 		}
 
-		const path = `${organizationId}.png`;
+		const path = `${organizationId}.webp`;
 		const signedUploadUrl = await getSignedUploadUrl(path, {
 			bucket: config.storage.bucketNames.avatars,
 		});
