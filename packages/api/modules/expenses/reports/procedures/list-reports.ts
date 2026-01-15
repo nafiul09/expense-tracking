@@ -19,10 +19,20 @@ export const listReportsProcedure = protectedProcedure
 		z.object({
 			organizationId: z.string(),
 			businessId: z.string().optional(),
+			reportType: z
+				.enum([
+					"all_categories",
+					"subscription",
+					"team_salary",
+					"one_time",
+					"team_member_loan",
+				])
+				.optional(),
+			isScheduled: z.boolean().optional(),
 		}),
 	)
 	.handler(async ({ context: { user }, input }) => {
-		const { organizationId, businessId } = input;
+		const { organizationId, businessId, reportType, isScheduled } = input;
 
 		const organization = await getOrganizationById(organizationId);
 
@@ -41,7 +51,11 @@ export const listReportsProcedure = protectedProcedure
 
 		const reports = await getExpenseReportsByOrganizationId(
 			organizationId,
-			businessId,
+			{
+				businessId,
+				reportType,
+				isScheduled,
+			},
 		);
 
 		return reports;

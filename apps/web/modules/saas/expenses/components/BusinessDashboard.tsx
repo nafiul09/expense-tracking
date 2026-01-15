@@ -1,6 +1,7 @@
 "use client";
 
 import { expensesApi } from "@saas/expenses/lib/api";
+import { PageHeader } from "@saas/shared/components/PageHeader";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@ui/components/button";
 import {
@@ -48,14 +49,12 @@ export default function BusinessDashboard({
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-between">
+			<div className="flex items-start justify-between">
 				<div className="flex-1">
-					<h2 className="text-2xl font-bold">{business.name}</h2>
-					{business.description && (
-						<p className="text-muted-foreground mt-1">
-							{business.description}
-						</p>
-					)}
+					<PageHeader
+						title={business.name}
+						subtitle={business.description || undefined}
+					/>
 				</div>
 				<div className="flex items-center gap-2">
 					<DropdownMenu>

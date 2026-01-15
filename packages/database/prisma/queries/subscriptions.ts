@@ -7,7 +7,7 @@ export async function getSubscriptionById(id: string) {
 		include: {
 			expense: {
 				include: {
-					business: true,
+					expenseAccount: true,
 					category: true,
 				},
 			},
@@ -26,7 +26,7 @@ export async function getSubscriptionByExpenseId(expenseId: string) {
 		include: {
 			expense: {
 				include: {
-					business: true,
+					expenseAccount: true,
 				},
 			},
 		},
@@ -52,6 +52,75 @@ export async function getSubscriptionsByBusinessId(
 		include: {
 			expense: {
 				include: {
+					expenseAccount: {
+						select: {
+							id: true,
+							name: true,
+							currency: true,
+						},
+					},
+					category: true,
+				},
+			},
+		},
+		orderBy: {
+			renewalDate: "asc",
+		},
+	});
+}
+
+export async function getAllSubscriptionsByOrganizationId(
+	organizationId: string,
+	options?: {
+		accountIds?: string[];
+		status?: string;
+		renewalFrequency?: string;
+		nextRenewalStart?: Date;
+		nextRenewalEnd?: Date;
+	},
+) {
+	const where: any = {
+		expense: {
+			expenseAccount: {
+				organizationId,
+			},
+		},
+	};
+
+	if (options?.accountIds && options.accountIds.length > 0) {
+		where.expense.businessId = { in: options.accountIds };
+	}
+
+	if (options?.status) {
+		where.status = options.status;
+	}
+
+	if (options?.renewalFrequency) {
+		where.renewalFrequency = options.renewalFrequency;
+	}
+
+	if (options?.nextRenewalStart || options?.nextRenewalEnd) {
+		where.renewalDate = {};
+		if (options.nextRenewalStart) {
+			where.renewalDate.gte = options.nextRenewalStart;
+		}
+		if (options.nextRenewalEnd) {
+			where.renewalDate.lte = options.nextRenewalEnd;
+		}
+	}
+
+	return db.subscription.findMany({
+		where,
+		include: {
+			expense: {
+				include: {
+					expenseAccount: {
+						select: {
+							id: true,
+							name: true,
+							currency: true,
+						},
+					},
 					category: true,
 				},
 			},
@@ -82,6 +151,13 @@ export async function getUpcomingRenewals(
 		include: {
 			expense: {
 				include: {
+					expenseAccount: {
+						select: {
+							id: true,
+							name: true,
+							currency: true,
+						},
+					},
 					category: true,
 				},
 			},

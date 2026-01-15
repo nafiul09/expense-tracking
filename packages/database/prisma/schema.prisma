@@ -262,6 +262,7 @@ model ExpenseAccount {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   teamMembers    TeamMember[]
+  teamMemberAccounts TeamMemberAccount[]
   expenses       Expense[]
   expenseReports ExpenseReport[]
 
@@ -285,8 +286,8 @@ model ExpenseCategory {
 
 model TeamMember {
   id          String          @id @default(cuid())
-  businessId String
-  expenseAccount   ExpenseAccount        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String?
+  expenseAccount   ExpenseAccount?        @relation(fields: [businessId], references: [id], onDelete: Cascade)
   name        String
   email       String?
   position    String?
@@ -298,9 +299,28 @@ model TeamMember {
   updatedAt   DateTime        @updatedAt
   expenses    Expense[]
   loans       TeamMemberLoan[]
+  accounts    TeamMemberAccount[]
 
   @@index([businessId])
   @@map("teamMember")
+}
+
+model TeamMemberAccount {
+  id          String          @id @default(cuid())
+  teamMemberId String
+  teamMember  TeamMember      @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
+  accountId   String
+  account     ExpenseAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  joinedDate  DateTime?
+  salary      Decimal?
+  position    String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([teamMemberId, accountId])
+  @@index([teamMemberId])
+  @@index([accountId])
+  @@map("teamMemberAccount")
 }
 
 model PaymentMethod {
@@ -417,17 +437,22 @@ model ExpenseReport {
   organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   businessId        String?
   expenseAccount          ExpenseAccount?    @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  reportName        String?
+  reportType        String       @default("all_categories")
   reportPeriodStart DateTime
   reportPeriodEnd   DateTime
+  selectedAccountIds Json?
   totalExpenses     Decimal      @default(0)
   reportCurrency    String       @default("USD")
   categoryBreakdown Json?
   reportData        Json
+  isScheduled       Boolean      @default(false)
   generatedAt       DateTime     @default(now())
   emailSentAt       DateTime?
 
   @@index([organizationId])
   @@index([businessId])
+  @@index([reportType])
   @@map("expenseReport")
 }
 

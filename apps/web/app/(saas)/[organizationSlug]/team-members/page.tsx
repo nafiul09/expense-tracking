@@ -1,8 +1,8 @@
 import { getActiveOrganization } from "@saas/auth/lib/server";
+import ConsolidatedTeamMembersDashboard from "@saas/expenses/components/ConsolidatedTeamMembersDashboard";
 import { PageHeader } from "@saas/shared/components/PageHeader";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import ConsolidatedExpensesDashboard from "@saas/expenses/components/ConsolidatedExpensesDashboard";
 
 export async function generateMetadata({
 	params,
@@ -16,12 +16,12 @@ export async function generateMetadata({
 
 	return {
 		title: activeOrganization
-			? `All Expenses - ${activeOrganization.name}`
-			: "All Expenses",
+			? `Team Members - ${activeOrganization.name}`
+			: "Team Members",
 	};
 }
 
-export default async function ConsolidatedExpensesPage({
+export default async function ConsolidatedTeamMembersPage({
 	params,
 }: {
 	params: Promise<{ organizationSlug: string }>;
@@ -40,11 +40,13 @@ export default async function ConsolidatedExpensesPage({
 	return (
 		<div>
 			<PageHeader
-				title={t("expenses.consolidated.title")}
-				subtitle={t("expenses.consolidated.subtitle")}
+				title={t("expenses.teamMembers.consolidated.title")}
+				subtitle={t("expenses.teamMembers.consolidated.subtitle")}
 			/>
 
-			<ConsolidatedExpensesDashboard organizationId={activeOrganization.id} />
+			<ConsolidatedTeamMembersDashboard
+				organizationId={activeOrganization.id}
+			/>
 		</div>
 	);
 }

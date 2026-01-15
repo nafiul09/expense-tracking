@@ -8,7 +8,7 @@ export async function getLoanById(id: string) {
 		include: {
 			expense: {
 				include: {
-					business: true,
+					expenseAccount: true,
 					category: true,
 				},
 			},
@@ -60,10 +60,97 @@ export async function getLoansByBusinessId(
 		include: {
 			expense: {
 				include: {
+					expenseAccount: {
+						select: {
+							id: true,
+							name: true,
+							currency: true,
+						},
+					},
 					category: true,
 				},
 			},
-			teamMember: true,
+			teamMember: {
+				select: {
+					id: true,
+					name: true,
+					email: true,
+				},
+			},
+			_count: {
+				select: {
+					payments: true,
+				},
+			},
+		},
+		orderBy: {
+			loanDate: "desc",
+		},
+	});
+}
+
+export async function getAllLoansByOrganizationId(
+	organizationId: string,
+	options?: {
+		accountIds?: string[];
+		teamMemberIds?: string[];
+		status?: string;
+		loanDateStart?: Date;
+		loanDateEnd?: Date;
+	},
+) {
+	const where: any = {
+		expense: {
+			expenseAccount: {
+				organizationId,
+			},
+		},
+	};
+
+	if (options?.accountIds && options.accountIds.length > 0) {
+		where.expense.businessId = { in: options.accountIds };
+	}
+
+	if (options?.teamMemberIds && options.teamMemberIds.length > 0) {
+		where.teamMemberId = { in: options.teamMemberIds };
+	}
+
+	if (options?.status) {
+		where.status = options.status;
+	}
+
+	if (options?.loanDateStart || options?.loanDateEnd) {
+		where.loanDate = {};
+		if (options.loanDateStart) {
+			where.loanDate.gte = options.loanDateStart;
+		}
+		if (options.loanDateEnd) {
+			where.loanDate.lte = options.loanDateEnd;
+		}
+	}
+
+	return db.teamMemberLoan.findMany({
+		where,
+		include: {
+			expense: {
+				include: {
+					expenseAccount: {
+						select: {
+							id: true,
+							name: true,
+							currency: true,
+						},
+					},
+					category: true,
+				},
+			},
+			teamMember: {
+				select: {
+					id: true,
+					name: true,
+					email: true,
+				},
+			},
 			_count: {
 				select: {
 					payments: true,

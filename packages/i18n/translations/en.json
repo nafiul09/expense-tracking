@@ -106,7 +106,11 @@
 			"shares": "Shares",
 			"resources": "Resources",
 			"createProject": "Create Project",
-			"expenses": "Expenses"
+			"expenses": "Expenses",
+			"expenseAccounts": "Expense Accounts",
+			"subscriptions": "Subscriptions",
+			"teamMembers": "Team Members",
+			"loans": "Loans"
 		},
 		"sidebar": {
 			"feedback": "Feedback",
@@ -230,7 +234,12 @@
 		"delete": "Delete",
 		"create": "Create",
 		"none": "None",
+		"notAvailable": "Not available",
 		"loading": "Loading...",
+		"selectDate": "Select date",
+		"showing": "Showing {start} to {end} of {total}",
+		"previous": "Previous",
+		"next": "Next",
 		"confirmation": {
 			"cancel": "Cancel",
 			"confirm": "Confirm"
@@ -1071,7 +1080,7 @@
 		"noResults": "No results found",
 		"searchInShares": "Search in shares..."
 	},
-	"expenses": {
+		"expenses": {
 		"create": "Create Expense",
 		"created": "Expense created successfully",
 		"createError": "Failed to create expense",
@@ -1084,6 +1093,10 @@
 		"createDescription": "Add a new expense to track your spending.",
 		"edit": "Edit Expense",
 		"editDescription": "Update the details of this expense.",
+		"status": {
+			"active": "Active",
+			"cancelled": "Cancelled"
+		},
 		"empty": "No expenses found",
 		"tabs": {
 			"expenses": "Expenses",
@@ -1123,10 +1136,13 @@
 			"category": "Category",
 			"amount": "Amount",
 			"date": "Date",
-			"actions": "Actions"
+			"actions": "Actions",
+			"teamMember": "Team Member",
+			"status": "Status"
 		},
 		"expenseAccounts": {
 			"title": "Expense Accounts",
+			"subtitle": "Manage and organize your expense accounts",
 			"create": "Create Expense Account",
 			"createDescription": "Create a new expense account to organize your expenses.",
 			"created": "Expense account created successfully",
@@ -1175,18 +1191,76 @@
 				"name": "Name",
 				"position": "Position",
 				"salary": "Salary",
-				"status": "Status"
+				"status": "Status",
+				"email": "Email",
+				"actions": "Actions"
 			},
-			"empty": "No team members found"
+			"empty": "No team members found",
+			"consolidated": {
+				"title": "Team Members",
+				"subtitle": "Manage team members and their account associations",
+				"totalMembers": "Total Members",
+				"totalMonthlySalaries": "Total Monthly Salaries",
+				"connectedAccounts": "Connected Accounts",
+				"account": "account",
+				"accounts": "accounts"
+			},
+			"filters": {
+				"status": "Status",
+				"statusAll": "All",
+				"statusActive": "Active",
+				"statusInactive": "Inactive",
+				"search": "Search",
+				"searchPlaceholder": "Search by name or email",
+				"expenseAccounts": "Expense Accounts"
+			},
+			"view": "View",
+			"edit": "Edit",
+			"delete": "Delete"
 		},
 		"subscriptions": {
 			"table": {
 				"name": "Name",
 				"amount": "Amount",
 				"renewalDate": "Renewal Date",
-				"status": "Status"
+				"status": "Status",
+				"title": "Title",
+				"provider": "Provider",
+				"frequency": "Frequency",
+				"nextRenewal": "Next Renewal"
 			},
-			"empty": "No subscriptions found"
+			"status": {
+				"active": "Active",
+				"cancelled": "Cancelled",
+				"paused": "Paused"
+			},
+			"frequency": {
+				"monthly": "Monthly",
+				"yearly": "Yearly"
+			},
+			"empty": "No subscriptions found",
+			"consolidated": {
+				"title": "All Subscriptions",
+				"subtitle": "Manage subscriptions across all accounts",
+				"totalActive": "Total Active",
+				"totalMonthlyCost": "Total Monthly Cost",
+				"upcomingRenewals": "Upcoming Renewals",
+				"expenseAccount": "Expense Account"
+			},
+			"filters": {
+				"status": "Status",
+				"statusAll": "All",
+				"statusActive": "Active",
+				"statusCancelled": "Cancelled",
+				"statusPaused": "Paused",
+				"frequency": "Frequency",
+				"frequencyAll": "All",
+				"frequencyMonthly": "Monthly",
+				"frequencyYearly": "Yearly",
+				"nextRenewalStart": "Next Renewal Start",
+				"expenseAccounts": "Expense Accounts"
+			},
+			"renewingSoon": "Renewing Soon"
 		},
 		"loans": {
 			"table": {
@@ -1194,9 +1268,35 @@
 				"principal": "Principal",
 				"remaining": "Remaining",
 				"date": "Date",
-				"status": "Status"
+				"status": "Status",
+				"loanDate": "Loan Date",
+				"progress": "Progress"
 			},
-			"empty": "No loans found"
+			"status": {
+				"active": "Active",
+				"partial": "Partial",
+				"paid": "Paid"
+			},
+			"empty": "No loans found",
+			"consolidated": {
+				"title": "Team Member Loans",
+				"subtitle": "Track loans across all expense accounts",
+				"totalActive": "Total Active",
+				"totalOutstanding": "Total Outstanding",
+				"totalPaid": "Total Paid",
+				"expenseAccount": "Expense Account"
+			},
+			"filters": {
+				"status": "Status",
+				"statusAll": "All",
+				"statusActive": "Active",
+				"statusPartial": "Partial",
+				"statusPaid": "Paid",
+				"loanDateStart": "Loan Date Start",
+				"loanDateEnd": "Loan Date End",
+				"expenseAccounts": "Expense Accounts",
+				"teamMembers": "Team Members"
+			}
 		},
 		"analytics": {
 			"title": "Analytics",
@@ -1212,6 +1312,27 @@
 			"title": "Expense Account Expenses",
 			"subtitle": "Manage expenses for this expense account"
 		},
+		"consolidated": {
+			"title": "All Expenses",
+			"subtitle": "View and manage expenses across all expense accounts",
+			"last30Days": "Last 30 Days",
+			"currentMonth": "Current Month",
+			"totalExpenses": "Total Expenses",
+			"expenseAccount": "Expense Account"
+		},
+		"filters": {
+			"startDate": "Start Date",
+			"endDate": "End Date",
+			"categories": "Categories",
+			"expenseAccounts": "Expense Accounts",
+			"status": "Status",
+			"statusAll": "All",
+			"statusActive": "Active",
+			"statusCancelled": "Cancelled",
+			"search": "Search",
+			"searchPlaceholder": "Search by title or description"
+		},
+		"generateReport": "Generate Report",
 		"reports": {
 			"title": "Expense Reports",
 			"subtitle": "View and generate detailed expense reports",
@@ -1232,7 +1353,20 @@
 				"allExpenseAccounts": "All Expense Accounts",
 				"startDate": "Start Date",
 				"endDate": "End Date",
-				"currency": "Report Currency"
+				"currency": "Report Currency",
+				"reportName": "Report Name",
+				"reportNamePlaceholder": "Enter report name (optional)",
+				"reportTypeLabel": "Report Type",
+				"reportType": {
+					"allCategories": "All Categories",
+					"subscription": "Subscription Expenses",
+					"teamSalary": "Team Salary Expenses",
+					"oneTime": "One-time Expenses",
+					"teamMemberLoan": "Team Member Loan Expenses"
+				},
+				"expenseAccounts": "Expense Accounts",
+				"selectAllAccountsHint": "Select specific accounts or leave empty for all accounts",
+				"includeDetails": "Include Details"
 			},
 			"table": {
 				"period": "Period",
@@ -1279,7 +1413,7 @@
 				"invalidSeparator": "Separators must be single characters",
 				"separatorsMustDiffer": "Thousands and decimal separators must be different"
 			},
-			"deleteError": {
+			"deleteErrors": {
 				"expenseAccountsInUse": "Cannot delete currency {currency}. It is currently used by {count} expense account(s). Please update or delete those expense accounts first.",
 				"expensesInUse": "Cannot delete currency {currency}. It is currently used by {count} expense(s). Please update or delete those expenses first."
 			},

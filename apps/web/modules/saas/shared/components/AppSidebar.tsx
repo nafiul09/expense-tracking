@@ -22,6 +22,10 @@ import {
 	ReceiptIcon,
 	SettingsIcon,
 	UserCogIcon,
+	BuildingIcon,
+	RepeatIcon,
+	UsersIcon,
+	BanknoteIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -60,9 +64,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const basePath = activeOrganization
 		? `/workspace/${activeOrganization.slug}`
 		: "/workspace";
+	const expenseAccountsPath = activeOrganization
+		? `/${activeOrganization.slug}/expense-accounts`
+		: "/expense-accounts";
 	const expensesPath = activeOrganization
 		? `/${activeOrganization.slug}/expenses`
 		: "/expenses";
+	const subscriptionsPath = activeOrganization
+		? `/${activeOrganization.slug}/subscriptions`
+		: "/subscriptions";
+	const teamMembersPath = activeOrganization
+		? `/${activeOrganization.slug}/team-members`
+		: "/team-members";
+	const loansPath = activeOrganization
+		? `/${activeOrganization.slug}/loans`
+		: "/loans";
 	const reportsPath = activeOrganization
 		? `/${activeOrganization.slug}/expenses/reports`
 		: "/expenses/reports";
@@ -78,13 +94,40 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 		...(activeOrganization
 			? [
 					{
+						label: t("app.menu.expenseAccounts"),
+						href: expenseAccountsPath,
+						icon: BuildingIcon,
+						isActive: pathname.includes("/expense-accounts") && !pathname.includes("/expense-accounts/"),
+						hasAction: false,
+					},
+					{
 						label: t("app.menu.expenses"),
 						href: expensesPath,
 						icon: ReceiptIcon,
 						isActive:
-							pathname.includes("/expenses") &&
-							!pathname.includes("/expenses/analytics") &&
-							!pathname.includes("/expenses/reports"),
+							pathname === expensesPath ||
+							pathname.includes("/expenses/analytics"),
+						hasAction: false,
+					},
+					{
+						label: t("app.menu.subscriptions"),
+						href: subscriptionsPath,
+						icon: RepeatIcon,
+						isActive: pathname === subscriptionsPath,
+						hasAction: false,
+					},
+					{
+						label: t("app.menu.teamMembers"),
+						href: teamMembersPath,
+						icon: UsersIcon,
+						isActive: pathname === teamMembersPath,
+						hasAction: false,
+					},
+					{
+						label: t("app.menu.loans"),
+						href: loansPath,
+						icon: BanknoteIcon,
+						isActive: pathname === loansPath,
 						hasAction: false,
 					},
 					{

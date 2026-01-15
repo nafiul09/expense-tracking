@@ -5,7 +5,7 @@ export async function getExpenseById(id: string) {
 	return db.expense.findUnique({
 		where: { id },
 		include: {
-			business: true,
+			expenseAccount: true,
 			category: true,
 			teamMember: true,
 			paymentMethod: true,
@@ -51,6 +51,7 @@ export async function getExpensesByBusinessId(
 	return db.expense.findMany({
 		where,
 		include: {
+			expenseAccount: true,
 			category: true,
 			teamMember: true,
 			paymentMethod: true,
@@ -61,6 +62,95 @@ export async function getExpensesByBusinessId(
 		take: options?.limit,
 		skip: options?.offset,
 	});
+}
+
+export async function getAllExpensesByOrganizationId(
+	organizationId: string,
+	options?: {
+		categoryIds?: string[];
+		accountIds?: string[];
+		teamMemberId?: string;
+		startDate?: Date;
+		endDate?: Date;
+		status?: string;
+		search?: string;
+		limit?: number;
+		offset?: number;
+	},
+) {
+	const where: any = {
+		expenseAccount: {
+			organizationId,
+		},
+	};
+
+	if (options?.categoryIds && options.categoryIds.length > 0) {
+		where.categoryId = { in: options.categoryIds };
+	}
+
+	if (options?.accountIds && options.accountIds.length > 0) {
+		where.businessId = { in: options.accountIds };
+	}
+
+	if (options?.teamMemberId) {
+		where.teamMemberId = options.teamMemberId;
+	}
+
+	if (options?.status) {
+		where.status = options.status;
+	}
+
+	if (options?.startDate || options?.endDate) {
+		where.date = {};
+		if (options.startDate) {
+			where.date.gte = options.startDate;
+		}
+		if (options.endDate) {
+			where.date.lte = options.endDate;
+		}
+	}
+
+	if (options?.search) {
+		where.OR = [
+			{ title: { contains: options.search, mode: "insensitive" } },
+			{ description: { contains: options.search, mode: "insensitive" } },
+		];
+	}
+
+	const [expenses, total] = await Promise.all([
+		db.expense.findMany({
+			where,
+			include: {
+				expenseAccount: {
+					select: {
+						id: true,
+						name: true,
+						currency: true,
+					},
+				},
+				category: true,
+				teamMember: {
+					select: {
+						id: true,
+						name: true,
+						email: true,
+					},
+				},
+				paymentMethod: true,
+			},
+			orderBy: {
+				date: "desc",
+			},
+			take: options?.limit,
+			skip: options?.offset,
+		}),
+		db.expense.count({ where }),
+	]);
+
+	return {
+		expenses,
+		total,
+	};
 }
 
 export async function createExpense(data: {

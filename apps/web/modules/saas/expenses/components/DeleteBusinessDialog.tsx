@@ -44,9 +44,9 @@ export function DeleteBusinessDialog({
 				queryKey: ["businesses", organizationId],
 			});
 			onOpenChange(false);
-			// Redirect to expenses page after deletion
+			// Redirect to expense accounts page after deletion
 			if (activeOrganization?.slug) {
-				router.push(`/${activeOrganization.slug}/expenses`);
+				router.push(`/${activeOrganization.slug}/expense-accounts`);
 			}
 		} catch (error) {
 			toast.error(t("expenses.expenseAccounts.deleteError"));

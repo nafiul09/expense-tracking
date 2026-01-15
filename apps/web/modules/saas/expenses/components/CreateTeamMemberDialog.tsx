@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { expensesApi } from "@saas/expenses/lib/api";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@ui/components/button";
 import {
 	Dialog,
@@ -43,6 +43,16 @@ const formSchema = z.object({
 	salary: z.number().nonnegative().optional(),
 	status: z.enum(["active", "inactive"]).default("active"),
 	notes: z.string().optional(),
+	accountAssociations: z
+		.array(
+			z.object({
+				accountId: z.string(),
+				position: z.string().optional(),
+				joinedDate: z.coerce.date().optional(),
+				salary: z.number().nonnegative().optional(),
+			}),
+		)
+		.optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -50,16 +60,30 @@ type FormValues = z.infer<typeof formSchema>;
 interface CreateTeamMemberDialogProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	businessId: string;
+	businessId?: string; // Optional for backward compatibility
+	organizationId?: string; // For consolidated view
+	defaultAccountIds?: string[]; // Pre-selected accounts
 }
 
 export function CreateTeamMemberDialog({
 	open,
 	onOpenChange,
 	businessId,
+	organizationId,
+	defaultAccountIds = [],
 }: CreateTeamMemberDialogProps) {
 	const t = useTranslations();
 	const queryClient = useQueryClient();
+
+	// Fetch expense accounts if organizationId is provided
+	const { data: expenseAccounts } = useQuery({
+		queryKey: ["expenseAccounts", organizationId],
+		queryFn: () =>
+			organizationId
+				? expensesApi.expenseAccounts.list(organizationId)
+				: Promise.resolve([]),
+		enabled: !!organizationId,
+	});
 
 	const form = useForm<FormValues>({
 		resolver: zodResolver(formSchema),
@@ -71,6 +95,9 @@ export function CreateTeamMemberDialog({
 			salary: undefined,
 			status: "active",
 			notes: "",
+			accountAssociations: defaultAccountIds.map((id) => ({
+				accountId: id,
+			})),
 		},
 	});
 
@@ -99,12 +126,20 @@ export function CreateTeamMemberDialog({
 				salary: values.salary || undefined,
 				status: values.status,
 				notes: values.notes || undefined,
+				accountAssociations: values.accountAssociations,
 			});
 
 			toast.success(t("expenses.teamMembers.created"));
-			queryClient.invalidateQueries({
-				queryKey: ["teamMembers", businessId],
-			});
+			if (businessId) {
+				queryClient.invalidateQueries({
+					queryKey: ["teamMembers", businessId],
+				});
+			}
+			if (organizationId) {
+				queryClient.invalidateQueries({
+					queryKey: ["all-team-members", organizationId],
+				});
+			}
 			form.reset();
 			onOpenChange(false);
 		} catch (error) {

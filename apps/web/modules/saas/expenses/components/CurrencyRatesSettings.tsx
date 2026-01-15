@@ -524,7 +524,7 @@ function DeleteCurrencyRateDialog({
 					const count = match[1];
 					toast.error(
 						t(
-							"expenses.currencies.deleteError.expenseAccountsInUse",
+							"expenses.currencies.deleteErrors.expenseAccountsInUse",
 							{
 								currency,
 								count,
@@ -539,7 +539,7 @@ function DeleteCurrencyRateDialog({
 				if (match) {
 					const count = match[1];
 					toast.error(
-						t("expenses.currencies.deleteError.expensesInUse", {
+						t("expenses.currencies.deleteErrors.expensesInUse", {
 							currency,
 							count,
 						}),

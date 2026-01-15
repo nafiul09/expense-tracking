@@ -22,9 +22,16 @@ export const badge = cva(
 				warning: ["bg-amber-500/10", "text-amber-500"],
 				error: ["bg-rose-500/10", "text-rose-500"],
 			},
+			variant: {
+				default: ["bg-primary", "text-primary-foreground"],
+				secondary: ["bg-secondary", "text-secondary-foreground"],
+				outline: ["border", "border-input", "bg-background"],
+				destructive: ["bg-destructive", "text-destructive-foreground"],
+			},
 		},
 		defaultVariants: {
-			status: "info",
+			status: undefined,
+			variant: undefined,
 		},
 	},
 );
@@ -36,9 +43,10 @@ export const Badge = ({
 	children,
 	className,
 	status,
+	variant,
 	...props
 }: BadgeProps) => (
-	<span className={cn(badge({ status }), className)} {...props}>
+	<span className={cn(badge({ status, variant }), className)} {...props}>
 		{children}
 	</span>
 );

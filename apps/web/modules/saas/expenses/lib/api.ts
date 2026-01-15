@@ -112,6 +112,20 @@ export const expensesApi = {
 		}) => {
 			return orpcClient.expenses.list(data);
 		},
+		listAll: async (data: {
+			organizationId: string;
+			categoryIds?: string[];
+			accountIds?: string[];
+			teamMemberId?: string;
+			startDate?: Date;
+			endDate?: Date;
+			status?: string;
+			search?: string;
+			limit?: number;
+			offset?: number;
+		}) => {
+			return orpcClient.expenses.listAll(data);
+		},
 		getDetails: async (id: string) => {
 			return orpcClient.expenses.getDetails({ id });
 		},
@@ -194,11 +208,19 @@ export const expensesApi = {
 		list: async (businessId: string) => {
 			return orpcClient.expenses.teamMembers.list({ businessId });
 		},
+		listAll: async (data: {
+			organizationId: string;
+			accountIds?: string[];
+			status?: string;
+			search?: string;
+		}) => {
+			return orpcClient.expenses.teamMembers.listAll(data);
+		},
 		getDetails: async (id: string) => {
 			return orpcClient.expenses.teamMembers.getDetails({ id });
 		},
 		create: async (data: {
-			businessId: string;
+			businessId?: string;
 			name: string;
 			email?: string;
 			position?: string;
@@ -206,6 +228,12 @@ export const expensesApi = {
 			salary?: number;
 			status?: "active" | "inactive";
 			notes?: string;
+			accountAssociations?: Array<{
+				accountId: string;
+				position?: string;
+				joinedDate?: Date;
+				salary?: number;
+			}>;
 		}) => {
 			return orpcClient.expenses.teamMembers.create(data);
 		},
@@ -233,6 +261,16 @@ export const expensesApi = {
 			status?: "active" | "cancelled" | "paused";
 		}) => {
 			return orpcClient.expenses.subscriptions.list(data);
+		},
+		listAll: async (data: {
+			organizationId: string;
+			accountIds?: string[];
+			status?: "active" | "cancelled" | "paused";
+			renewalFrequency?: string;
+			nextRenewalStart?: Date;
+			nextRenewalEnd?: Date;
+		}) => {
+			return orpcClient.expenses.subscriptions.listAll(data);
 		},
 		getUpcomingRenewals: async (data: {
 			businessId: string;
@@ -273,6 +311,16 @@ export const expensesApi = {
 			teamMemberId?: string;
 		}) => {
 			return orpcClient.expenses.loans.list(data);
+		},
+		listAll: async (data: {
+			organizationId: string;
+			accountIds?: string[];
+			teamMemberIds?: string[];
+			status?: "active" | "paid" | "partial";
+			loanDateStart?: Date;
+			loanDateEnd?: Date;
+		}) => {
+			return orpcClient.expenses.loans.listAll(data);
 		},
 		getHistory: async (id: string) => {
 			return orpcClient.expenses.loans.getHistory({ id });
@@ -355,6 +403,18 @@ export const expensesApi = {
 			reportCurrency?: string;
 		}) => {
 			return orpcClient.expenses.reports.generate(data);
+		},
+		generateCustom: async (data: {
+			organizationId: string;
+			reportName?: string;
+			reportType?: "all_categories" | "subscription" | "team_salary" | "one_time" | "team_member_loan";
+			accountIds?: string[];
+			reportPeriodStart: Date;
+			reportPeriodEnd: Date;
+			reportCurrency?: string;
+			includeDetails?: boolean;
+		}) => {
+			return orpcClient.expenses.reports.generateCustom(data);
 		},
 	},
 };

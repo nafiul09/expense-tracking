@@ -69,7 +69,7 @@ export function BusinessList({ organizationId }: BusinessListProps) {
 							className="group relative p-6 transition-colors hover:bg-accent"
 						>
 							<Link
-								href={`/${activeOrganization?.slug}/expenses/${business.id}`}
+								href={`/${activeOrganization?.slug}/expense-accounts/${business.id}`}
 								className="block space-y-2 pr-8"
 							>
 								<div className="flex items-center gap-2">

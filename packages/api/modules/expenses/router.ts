@@ -9,6 +9,7 @@ import { deleteExpenseProcedure } from "./procedures/delete-expense";
 import { getExpenseDetailsProcedure } from "./procedures/get-expense-details";
 import { listCategoriesProcedure } from "./procedures/list-categories";
 import { listExpensesProcedure } from "./procedures/list-expenses";
+import { listAllExpensesProcedure } from "./procedures/list-all-expenses";
 import { listPaymentMethodsProcedure } from "./procedures/list-payment-methods";
 import { updateExpenseProcedure } from "./procedures/update-expense";
 import { reportsRouter } from "./reports/router";
@@ -25,6 +26,7 @@ export const expensesRouter = {
 	reports: reportsRouter,
 	create: createExpenseProcedure,
 	list: listExpensesProcedure,
+	listAll: listAllExpensesProcedure,
 	getDetails: getExpenseDetailsProcedure,
 	update: updateExpenseProcedure,
 	delete: deleteExpenseProcedure,
