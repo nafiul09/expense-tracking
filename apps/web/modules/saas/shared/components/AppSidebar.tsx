@@ -11,38 +11,33 @@ import {
 	SidebarGroupContent,
 	SidebarHeader,
 	SidebarMenu,
-	SidebarMenuAction,
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarRail,
 } from "@ui/components/sidebar";
 import {
-	BookOpenIcon,
 	FileTextIcon,
-	FolderKanbanIcon,
 	LayoutDashboardIcon,
 	MessageSquareIcon,
-	PlusIcon,
+	ReceiptIcon,
 	SettingsIcon,
 	UserCogIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { NavUser } from "./NavUser";
-import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
-import { CreateProjectDialog } from "./CreateProjectDialog";
 import { PlanUsageCard } from "./PlanUsageCard";
-import { SearchTrigger } from "./SearchTrigger";
 import { SearchModal } from "./SearchModal";
+import { SearchTrigger } from "./SearchTrigger";
+import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const t = useTranslations();
 	const pathname = usePathname();
 	const { user } = useSession();
 	const { activeOrganization, isOrganizationAdmin } = useActiveOrganization();
-	const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
 	const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
 	// Handle CMD+K keyboard shortcut
@@ -65,6 +60,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const basePath = activeOrganization
 		? `/workspace/${activeOrganization.slug}`
 		: "/workspace";
+	const expensesPath = activeOrganization
+		? `/${activeOrganization.slug}/expenses`
+		: "/expenses";
+	const reportsPath = activeOrganization
+		? `/${activeOrganization.slug}/expenses/reports`
+		: "/expenses/reports";
 
 	const menuItems = [
 		{
@@ -74,32 +75,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			isActive: pathname === basePath,
 			hasAction: false,
 		},
-		{
-			label: t("app.menu.projects"),
-			href: `${basePath}/projects`,
-			icon: FolderKanbanIcon,
-			isActive: pathname.includes("/projects"),
-			hasAction: true,
-			onActionClick: () => setIsProjectDialogOpen(true),
-		},
 		...(activeOrganization
 			? [
 					{
+						label: t("app.menu.expenses"),
+						href: expensesPath,
+						icon: ReceiptIcon,
+						isActive:
+							pathname.includes("/expenses") &&
+							!pathname.includes("/expenses/analytics") &&
+							!pathname.includes("/expenses/reports"),
+						hasAction: false,
+					},
+					{
 						label: t("app.menu.reports"),
-						href: `${basePath}/reports`,
+						href: reportsPath,
 						icon: FileTextIcon,
-						isActive: pathname.includes("/reports"),
+						isActive: pathname.includes("/expenses/reports"),
 						hasAction: false,
 					},
 				]
 			: []),
-		{
-			label: t("app.menu.resources"),
-			href: `${basePath}/resources`,
-			icon: BookOpenIcon,
-			isActive: pathname.includes("/resources"),
-			hasAction: false,
-		},
 		...(activeOrganization && isOrganizationAdmin
 			? [
 					{
@@ -155,14 +151,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 											<span>{item.label}</span>
 										</Link>
 									</SidebarMenuButton>
-									{item.hasAction && item.onActionClick && (
-										<SidebarMenuAction
-											onClick={item.onActionClick}
-											className="top-1/2! -translate-y-1/2! right-1! w-auto! h-auto! aspect-auto! p-1.5! rounded-md! hover:bg-sidebar-accent!"
-										>
-											<PlusIcon className="size-4" />
-										</SidebarMenuAction>
-									)}
 								</SidebarMenuItem>
 							))}
 						</SidebarMenu>
@@ -188,10 +176,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				<PlanUsageCard />
 			</SidebarFooter>
 			<SidebarRail />
-			<CreateProjectDialog
-				open={isProjectDialogOpen}
-				onOpenChange={setIsProjectDialogOpen}
-			/>
 			<SearchModal
 				open={isSearchModalOpen}
 				onOpenChange={setIsSearchModalOpen}

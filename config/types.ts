@@ -36,7 +36,18 @@ export type Config = {
 	storage: {
 		bucketNames: {
 			avatars: string;
+			receipts: string;
 		};
+	};
+	expenses: {
+		defaultCategories: string[];
+		defaultReminderDays: number;
+		reportGeneration: {
+			defaultBillingPeriodStart: number; // Day of month (1-31)
+			defaultBillingPeriodEnd: number; // Day of month (1-31)
+		};
+		supportedCurrencies: string[];
+		defaultBaseCurrency: string;
 	};
 	ui: {
 		enabledThemes: Array<"light" | "dark">;

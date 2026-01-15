@@ -7,14 +7,15 @@ import { PageHeader } from "@saas/shared/components/PageHeader";
 import { SidebarContentLayout } from "@saas/shared/components/SidebarContentLayout";
 import { UserAvatar } from "@shared/components/UserAvatar";
 import {
+	BarChart3Icon,
 	CreditCardIcon,
+	DollarSignIcon,
+	LockKeyholeIcon,
+	PaletteIcon,
 	Settings2Icon,
 	SettingsIcon,
-	LockKeyholeIcon,
 	TriangleAlertIcon,
 	Users2Icon,
-	BarChart3Icon,
-	PaletteIcon,
 } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
@@ -106,6 +107,13 @@ export default async function SettingsLayout({
 								href: `${organizationSettingsBasePath}/branding`,
 								icon: (
 									<PaletteIcon className="size-4 opacity-50" />
+								),
+							},
+							{
+								title: t("expenses.currencies.title"),
+								href: `${organizationSettingsBasePath}/currencies`,
+								icon: (
+									<DollarSignIcon className="size-4 opacity-50" />
 								),
 							},
 						]

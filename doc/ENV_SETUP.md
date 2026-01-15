@@ -54,7 +54,23 @@ Your Neon (or other PostgreSQL) database connection string.
 1. Go to https://console.neon.tech
 2. Select your project
 3. Go to "Connection Details"
-4. Copy the connection string
+4. **Important:** Use the **"Pooled connection"** string (not the direct connection)
+   - Look for the connection string with `-pooler` in the hostname
+   - Example: `ep-xxx-pooler.us-east-2.aws.neon.tech`
+5. Add connection timeout parameters to prevent ETIMEDOUT errors:
+   ```
+   ?sslmode=require&connect_timeout=10&pool_timeout=10
+   ```
+
+**Example DATABASE_URL:**
+```bash
+DATABASE_URL="postgresql://user:password@ep-xxx-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require&connect_timeout=10&pool_timeout=10"
+```
+
+**Why use the pooler?**
+- Neon free tier databases "sleep" after inactivity
+- The pooler keeps connections warm and prevents timeout errors
+- Essential for serverless/Next.js environments
 
 ---
 
@@ -222,6 +238,35 @@ pnpm dev
 1. Verify all three variables are set: `VERCEL_AUTH_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID`
 2. Check token has correct permissions
 3. See CUSTOM_DOMAIN_SETUP_GUIDE.md for detailed troubleshooting
+
+### Database Connection Timeout (ETIMEDOUT)
+
+**Symptoms:**
+- Errors like `ETIMEDOUT` or `PrismaClientKnownRequestError` in terminal
+- Happens especially after periods of inactivity
+- Common with Neon free tier databases
+
+**Solution:**
+
+1. **Use Neon Connection Pooler** (Recommended):
+   - In Neon console, use the "Pooled connection" string (has `-pooler` in hostname)
+   - Add timeout parameters: `?sslmode=require&connect_timeout=10&pool_timeout=10`
+
+2. **Example:**
+   ```bash
+   # ❌ Direct connection (can timeout)
+   DATABASE_URL="postgresql://user:pass@ep-xxx.us-east-2.aws.neon.tech/neondb"
+   
+   # ✅ Pooled connection (recommended)
+   DATABASE_URL="postgresql://user:pass@ep-xxx-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require&connect_timeout=10&pool_timeout=10"
+   ```
+
+3. **Why this happens:**
+   - Neon free tier databases scale to zero after inactivity ("sleep")
+   - When they wake up, there can be connection timeouts
+   - The pooler keeps connections warm and prevents this issue
+
+**Note:** This is expected behavior with Neon's free tier, not a code bug. Using the pooler resolves it.
 
 ---
 

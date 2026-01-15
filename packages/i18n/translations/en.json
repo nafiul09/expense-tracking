@@ -105,7 +105,8 @@
 			"reports": "Reports",
 			"shares": "Shares",
 			"resources": "Resources",
-			"createProject": "Create Project"
+			"createProject": "Create Project",
+			"expenses": "Expenses"
 		},
 		"sidebar": {
 			"feedback": "Feedback",
@@ -227,6 +228,9 @@
 		"cancel": "Cancel",
 		"save": "Save",
 		"delete": "Delete",
+		"create": "Create",
+		"none": "None",
+		"loading": "Loading...",
 		"confirmation": {
 			"cancel": "Cancel",
 			"confirm": "Confirm"
@@ -275,6 +279,27 @@
 			"headline": "Join the workspace {organizationName}",
 			"join": "Join the workspace",
 			"subject": "You have been invited to join a workspace"
+		},
+		"subscriptionRenewalReminder": {
+			"headline": "Subscription Renewal Reminder: {subscriptionName}",
+			"body": "Your subscription {subscriptionName} for {businessName} will renew on {renewalDate} for {amount}. Make sure you have sufficient funds or cancel if needed.",
+			"viewSubscription": "View Subscription"
+		},
+		"subscriptionCancellationReminder": {
+			"headline": "Subscription Cancellation Reminder: {subscriptionName}",
+			"body": "Your subscription {subscriptionName} for {businessName} is set to cancel on {renewalDate}. If you want to keep it active, please renew before this date.",
+			"cancelSubscription": "Cancel Subscription"
+		},
+		"monthlyExpenseReport": {
+			"headline": "Monthly Expense Report",
+			"body": "Here is your monthly expense report for {businessName} covering the period from {reportPeriodStart} to {reportPeriodEnd}. Total expenses: {totalExpenses}",
+			"allExpenseAccounts": "All Expense Accounts",
+			"viewReport": "View Report"
+		},
+		"loanPaymentReceived": {
+			"headline": "Loan Payment Received",
+			"body": "A payment of {paymentAmount} has been received for the loan to {teamMemberName} in {businessName}. Remaining amount: {remainingAmount}",
+			"viewLoan": "View Loan"
 		}
 	},
 	"onboarding": {
@@ -1045,5 +1070,258 @@
 		"recentShares": "Recent Shares",
 		"noResults": "No results found",
 		"searchInShares": "Search in shares..."
+	},
+	"expenses": {
+		"create": "Create Expense",
+		"created": "Expense created successfully",
+		"createError": "Failed to create expense",
+		"updated": "Expense updated successfully",
+		"updateError": "Failed to update expense",
+		"deleted": "Expense deleted successfully",
+		"deleteError": "Failed to delete expense",
+		"delete": "Delete Expense",
+		"deleteDescription": "Are you sure you want to delete this expense? This action cannot be undone.",
+		"createDescription": "Add a new expense to track your spending.",
+		"edit": "Edit Expense",
+		"editDescription": "Update the details of this expense.",
+		"empty": "No expenses found",
+		"tabs": {
+			"expenses": "Expenses",
+			"subscriptions": "Subscriptions",
+			"team": "Team Members",
+			"loans": "Loans"
+		},
+		"dashboard": {
+			"title": "Expenses",
+			"subtitle": "Track and manage your expenses across all expense accounts",
+			"stats": {
+				"expenseAccounts": "Expense Accounts",
+				"businesses": "Expense Accounts",
+				"teamMembers": "Team Members",
+				"totalExpenses": "Total Expenses"
+			}
+		},
+		"form": {
+			"title": "Title",
+			"amount": "Amount",
+			"date": "Date",
+			"category": "Category",
+			"selectCategory": "Select a category",
+			"teamMember": "Team Member",
+			"selectTeamMember": "Select a team member",
+			"paymentMethod": "Payment Method",
+			"selectPaymentMethod": "Select a payment method",
+			"description": "Description",
+			"rateType": "Conversion Rate",
+			"useDefaultRate": "Use Default Rate",
+			"useCustomRate": "Use Custom Rate",
+			"customRate": "Custom Rate",
+			"customRateHint": "1 {baseCurrency} = ? (amount in {currency})"
+		},
+		"table": {
+			"title": "Title",
+			"category": "Category",
+			"amount": "Amount",
+			"date": "Date",
+			"actions": "Actions"
+		},
+		"expenseAccounts": {
+			"title": "Expense Accounts",
+			"create": "Create Expense Account",
+			"createDescription": "Create a new expense account to organize your expenses.",
+			"created": "Expense account created successfully",
+			"createError": "Failed to create expense account",
+			"edit": "Edit Expense Account",
+			"editDescription": "Update the details of this expense account.",
+			"updated": "Expense account updated successfully",
+			"updateError": "Failed to update expense account",
+			"delete": "Delete Expense Account",
+			"deleteDescription": "Are you sure you want to delete \"{businessName}\"? This will permanently delete the expense account and all associated expenses, team members, subscriptions, and loans. This action cannot be undone.",
+			"deleted": "Expense account deleted successfully",
+			"deleteError": "Failed to delete expense account",
+			"name": "Expense Account Name",
+			"description": "Description",
+			"type": "Type",
+			"currency": "Currency",
+			"types": {
+				"personal": "Personal",
+				"business": "Business"
+			},
+			"teamMembers": "{count} {count, plural, one {team member} other {team members}}",
+			"expenses": "{count} {count, plural, one {expense} other {expenses}}",
+			"empty": "No expense accounts found",
+			"createFirst": "Create your first expense account to get started"
+		},
+		"teamMembers": {
+			"title": "Team Members",
+			"create": "Create Team Member",
+			"createDescription": "Add a new team member to track salaries and loans.",
+			"created": "Team member created successfully",
+			"createError": "Failed to create team member",
+			"form": {
+				"name": "Name",
+				"email": "Email",
+				"position": "Position",
+				"joinedDate": "Joined Date",
+				"salary": "Salary",
+				"status": "Status",
+				"notes": "Notes"
+			},
+			"status": {
+				"active": "Active",
+				"inactive": "Inactive"
+			},
+			"table": {
+				"name": "Name",
+				"position": "Position",
+				"salary": "Salary",
+				"status": "Status"
+			},
+			"empty": "No team members found"
+		},
+		"subscriptions": {
+			"table": {
+				"name": "Name",
+				"amount": "Amount",
+				"renewalDate": "Renewal Date",
+				"status": "Status"
+			},
+			"empty": "No subscriptions found"
+		},
+		"loans": {
+			"table": {
+				"teamMember": "Team Member",
+				"principal": "Principal",
+				"remaining": "Remaining",
+				"date": "Date",
+				"status": "Status"
+			},
+			"empty": "No loans found"
+		},
+		"analytics": {
+			"title": "Analytics",
+			"subtitle": "Analyze your expense trends and patterns",
+			"selectExpenseAccount": "Select Expense Account",
+			"categoryBreakdown": "Category Breakdown",
+			"trends": "Expense Trends",
+			"expenseAccountComparison": "Expense Account Comparison",
+			"noData": "No data available",
+			"expenses": "expenses"
+		},
+		"expenseAccount": {
+			"title": "Expense Account Expenses",
+			"subtitle": "Manage expenses for this expense account"
+		},
+		"reports": {
+			"title": "Expense Reports",
+			"subtitle": "View and generate detailed expense reports",
+			"generate": "Generate Report",
+			"generateDescription": "Generate a detailed expense report for the selected period.",
+			"generated": "Report generated successfully",
+			"generateError": "Failed to generate report",
+			"reportTitle": "Expense Report",
+			"download": "Download Report",
+			"totalExpenses": "Total Expenses",
+			"expenseAccountBreakdown": "Expense Account Breakdown",
+			"empty": "No reports found",
+			"view": "View",
+			"viewSubtitle": "View detailed expense report",
+			"notFound": "Report not found",
+			"form": {
+				"expenseAccount": "Expense Account",
+				"allExpenseAccounts": "All Expense Accounts",
+				"startDate": "Start Date",
+				"endDate": "End Date",
+				"currency": "Report Currency"
+			},
+			"table": {
+				"period": "Period",
+				"totalExpenses": "Total Expenses",
+				"generatedAt": "Generated At",
+				"actions": "Actions",
+				"expenseAccount": "Expense Account",
+				"expenseCount": "Expense Count"
+			}
+		},
+		"currencies": {
+			"title": "Currencies",
+			"description": "Manage currencies with conversion rates and formatting options for your workspace. All rates are relative to USD.",
+			"add": "Add Currency",
+			"edit": "Edit Currency",
+			"delete": "Delete Currency",
+			"created": "Currency created successfully",
+			"createError": "Failed to create currency",
+			"updated": "Currency updated successfully",
+			"updateError": "Failed to update currency",
+			"deleted": "Currency deleted successfully",
+			"deleteError": "Failed to delete currency",
+			"deleteDescription": "Are you sure you want to delete the currency configuration for {currency}?",
+			"dialogDescription": "Configure currency conversion rate and formatting options from {baseCurrency} to the selected currency.",
+			"empty": "No currencies configured",
+			"form": {
+				"currency": "Currency",
+				"selectCurrency": "Select currency",
+				"rate": "Conversion Rate",
+				"rateHint": "1 {baseCurrency} = ? (amount in target currency)",
+				"symbol": "Currency Symbol",
+				"symbolHint": "Enter the currency symbol (e.g., $, €, £)",
+				"symbolPosition": "Symbol Position",
+				"symbolLeft": "Left (e.g., $100)",
+				"symbolRight": "Right (e.g., 100€)",
+				"separator": "Thousands Separator",
+				"separatorHint": "Character used to separate thousands (e.g., comma, space)",
+				"decimalSeparator": "Decimal Separator",
+				"decimalSeparatorHint": "Character used for decimal point"
+			},
+			"validation": {
+				"required": "Currency and rate are required",
+				"invalidRate": "Rate must be a positive number",
+				"invalidSeparator": "Separators must be single characters",
+				"separatorsMustDiffer": "Thousands and decimal separators must be different"
+			},
+			"deleteError": {
+				"expenseAccountsInUse": "Cannot delete currency {currency}. It is currently used by {count} expense account(s). Please update or delete those expense accounts first.",
+				"expensesInUse": "Cannot delete currency {currency}. It is currently used by {count} expense(s). Please update or delete those expenses first."
+			},
+			"table": {
+				"currency": "Currency",
+				"rate": "Rate",
+				"symbol": "Symbol",
+				"updatedAt": "Last Updated",
+				"actions": "Actions"
+			}
+		},
+		"currencyRates": {
+			"title": "Currency Rates",
+			"description": "Manage currency conversion rates for your workspace. All rates are relative to USD.",
+			"add": "Add Currency Rate",
+			"edit": "Edit Currency Rate",
+			"delete": "Delete Currency Rate",
+			"created": "Currency rate created successfully",
+			"createError": "Failed to create currency rate",
+			"updated": "Currency rate updated successfully",
+			"updateError": "Failed to update currency rate",
+			"deleted": "Currency rate deleted successfully",
+			"deleteError": "Failed to delete currency rate",
+			"deleteDescription": "Are you sure you want to delete the conversion rate for {currency}?",
+			"dialogDescription": "Set the conversion rate from {baseCurrency} to the selected currency.",
+			"empty": "No currency rates configured",
+			"form": {
+				"currency": "Currency",
+				"selectCurrency": "Select currency",
+				"rate": "Conversion Rate",
+				"rateHint": "1 {baseCurrency} = ? (amount in target currency)"
+			},
+			"validation": {
+				"required": "Currency and rate are required",
+				"invalidRate": "Rate must be a positive number"
+			},
+			"table": {
+				"currency": "Currency",
+				"rate": "Rate",
+				"updatedAt": "Last Updated",
+				"actions": "Actions"
+			}
+		}
 	}
 }

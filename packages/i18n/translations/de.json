@@ -80,7 +80,8 @@
 			"reports": "Berichte",
 			"shares": "Freigaben",
 			"resources": "Ressourcen",
-			"createProject": "Projekt erstellen"
+			"createProject": "Projekt erstellen",
+			"expenses": "Ausgaben"
 		},
 		"userMenu": {
 			"accountSettings": "Kontoeinstellungen",
@@ -194,6 +195,9 @@
 		"cancel": "Abbrechen",
 		"save": "Speichern",
 		"delete": "Löschen",
+		"create": "Erstellen",
+		"none": "Keine",
+		"loading": "Lädt...",
 		"confirmation": {
 			"cancel": "Abbrechen",
 			"confirm": "Bestätigen"
@@ -242,6 +246,27 @@
 			"headline": "Einladung zum Arbeitsbereich {organizationName}",
 			"join": "Tritt dem Arbeitsbereich bei",
 			"subject": "Du wurdest eingeladen, einem Arbeitsbereich beizutreten"
+		},
+		"subscriptionRenewalReminder": {
+			"headline": "Erinnerung an Abonnement-Verlängerung: {subscriptionName}",
+			"body": "Dein Abonnement {subscriptionName} für {businessName} wird am {renewalDate} für {amount} verlängert. Stelle sicher, dass du ausreichend Geldmittel hast oder kündige es bei Bedarf.",
+			"viewSubscription": "Abonnement ansehen"
+		},
+		"subscriptionCancellationReminder": {
+			"headline": "Erinnerung an Abonnement-Kündigung: {subscriptionName}",
+			"body": "Dein Abonnement {subscriptionName} für {businessName} wird am {renewalDate} gekündigt. Wenn du es aktiv halten möchtest, bitte verlängere es vor diesem Datum.",
+			"cancelSubscription": "Abonnement kündigen"
+		},
+		"monthlyExpenseReport": {
+			"headline": "Monatlicher Ausgabenbericht",
+			"body": "Hier ist dein monatlicher Ausgabenbericht für {businessName} für den Zeitraum von {reportPeriodStart} bis {reportPeriodEnd}. Gesamtausgaben: {totalExpenses}",
+			"allExpenseAccounts": "Alle Ausgabenkonten",
+			"viewReport": "Bericht ansehen"
+		},
+		"loanPaymentReceived": {
+			"headline": "Darlehenszahlung erhalten",
+			"body": "Eine Zahlung von {paymentAmount} wurde für das Darlehen an {teamMemberName} in {businessName} erhalten. Verbleibender Betrag: {remainingAmount}",
+			"viewLoan": "Darlehen ansehen"
 		}
 	},
 	"onboarding": {
@@ -812,5 +837,258 @@
 		"styleGuide": "Styleguide",
 		"headingStructure": "Überschriftenstruktur",
 		"searchPlaceholder": "Freigaben suchen..."
+	},
+	"expenses": {
+		"create": "Ausgabe erstellen",
+		"created": "Ausgabe erfolgreich erstellt",
+		"createError": "Ausgabe konnte nicht erstellt werden",
+		"updated": "Ausgabe erfolgreich aktualisiert",
+		"updateError": "Ausgabe konnte nicht aktualisiert werden",
+		"deleted": "Ausgabe erfolgreich gelöscht",
+		"deleteError": "Ausgabe konnte nicht gelöscht werden",
+		"delete": "Ausgabe löschen",
+		"deleteDescription": "Bist du sicher, dass du diese Ausgabe löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
+		"createDescription": "Füge eine neue Ausgabe hinzu, um deine Ausgaben zu verfolgen.",
+		"edit": "Ausgabe bearbeiten",
+		"editDescription": "Aktualisiere die Details dieser Ausgabe.",
+		"empty": "Keine Ausgaben gefunden",
+		"tabs": {
+			"expenses": "Ausgaben",
+			"subscriptions": "Abonnements",
+			"team": "Teammitglieder",
+			"loans": "Darlehen"
+		},
+		"dashboard": {
+			"title": "Ausgaben",
+			"subtitle": "Verfolge und verwalte deine Ausgaben für alle Ausgabenkonten",
+			"stats": {
+				"expenseAccounts": "Ausgabenkonten",
+				"businesses": "Ausgabenkonten",
+				"teamMembers": "Teammitglieder",
+				"totalExpenses": "Gesamtausgaben"
+			}
+		},
+		"form": {
+			"title": "Titel",
+			"amount": "Betrag",
+			"date": "Datum",
+			"category": "Kategorie",
+			"selectCategory": "Wähle eine Kategorie",
+			"teamMember": "Teammitglied",
+			"selectTeamMember": "Wähle ein Teammitglied",
+			"paymentMethod": "Zahlungsmethode",
+			"selectPaymentMethod": "Wähle eine Zahlungsmethode",
+			"description": "Beschreibung",
+			"rateType": "Umrechnungskurs",
+			"useDefaultRate": "Standardkurs verwenden",
+			"useCustomRate": "Benutzerdefinierten Kurs verwenden",
+			"customRate": "Benutzerdefinierter Kurs",
+			"customRateHint": "1 {baseCurrency} = ? (Betrag in {currency})"
+		},
+		"table": {
+			"title": "Titel",
+			"category": "Kategorie",
+			"amount": "Betrag",
+			"date": "Datum",
+			"actions": "Aktionen"
+		},
+		"expenseAccounts": {
+			"title": "Ausgabenkonten",
+			"create": "Ausgabenkonto erstellen",
+			"createDescription": "Erstelle ein neues Ausgabenkonto, um deine Ausgaben zu organisieren.",
+			"created": "Ausgabenkonto erfolgreich erstellt",
+			"createError": "Ausgabenkonto konnte nicht erstellt werden",
+			"edit": "Ausgabenkonto bearbeiten",
+			"editDescription": "Aktualisiere die Details dieses Ausgabenkontos.",
+			"updated": "Ausgabenkonto erfolgreich aktualisiert",
+			"updateError": "Ausgabenkonto konnte nicht aktualisiert werden",
+			"delete": "Ausgabenkonto löschen",
+			"deleteDescription": "Bist du sicher, dass du \"{businessName}\" löschen möchtest? Dies wird das Ausgabenkonto und alle zugehörigen Ausgaben, Teammitglieder, Abonnements und Darlehen dauerhaft löschen. Diese Aktion kann nicht rückgängig gemacht werden.",
+			"deleted": "Ausgabenkonto erfolgreich gelöscht",
+			"deleteError": "Ausgabenkonto konnte nicht gelöscht werden",
+			"name": "Ausgabenkontoname",
+			"description": "Beschreibung",
+			"type": "Typ",
+			"currency": "Währung",
+			"types": {
+				"personal": "Persönlich",
+				"business": "Geschäftlich"
+			},
+			"teamMembers": "{count} {count, plural, one {Teammitglied} other {Teammitglieder}}",
+			"expenses": "{count} {count, plural, one {Ausgabe} other {Ausgaben}}",
+			"empty": "Keine Ausgabenkonten gefunden",
+			"createFirst": "Erstelle dein erstes Ausgabenkonto, um zu beginnen"
+		},
+		"teamMembers": {
+			"title": "Teammitglieder",
+			"create": "Teammitglied erstellen",
+			"createDescription": "Füge ein neues Teammitglied hinzu, um Gehälter und Darlehen zu verfolgen.",
+			"created": "Teammitglied erfolgreich erstellt",
+			"createError": "Teammitglied konnte nicht erstellt werden",
+			"form": {
+				"name": "Name",
+				"email": "E-Mail",
+				"position": "Position",
+				"joinedDate": "Beitrittsdatum",
+				"salary": "Gehalt",
+				"status": "Status",
+				"notes": "Notizen"
+			},
+			"status": {
+				"active": "Aktiv",
+				"inactive": "Inaktiv"
+			},
+			"table": {
+				"name": "Name",
+				"position": "Position",
+				"salary": "Gehalt",
+				"status": "Status"
+			},
+			"empty": "Keine Teammitglieder gefunden"
+		},
+		"subscriptions": {
+			"table": {
+				"name": "Name",
+				"amount": "Betrag",
+				"renewalDate": "Verlängerungsdatum",
+				"status": "Status"
+			},
+			"empty": "Keine Abonnements gefunden"
+		},
+		"loans": {
+			"table": {
+				"teamMember": "Teammitglied",
+				"principal": "Hauptbetrag",
+				"remaining": "Verbleibend",
+				"date": "Datum",
+				"status": "Status"
+			},
+			"empty": "Keine Darlehen gefunden"
+		},
+		"analytics": {
+			"title": "Analysen",
+			"subtitle": "Analysiere deine Ausgabentrends und Muster",
+			"selectExpenseAccount": "Ausgabenkonto auswählen",
+			"categoryBreakdown": "Kategorieaufschlüsselung",
+			"trends": "Ausgabentrends",
+			"expenseAccountComparison": "Ausgabenkontovergleich",
+			"noData": "Keine Daten verfügbar",
+			"expenses": "Ausgaben"
+		},
+		"expenseAccount": {
+			"title": "Ausgabenkonto-Ausgaben",
+			"subtitle": "Verwalte Ausgaben für dieses Ausgabenkonto"
+		},
+		"reports": {
+			"title": "Ausgabenberichte",
+			"subtitle": "Anzeigen und Erstellen detaillierter Ausgabenberichte",
+			"generate": "Bericht erstellen",
+			"generateDescription": "Erstelle einen detaillierten Ausgabenbericht für den ausgewählten Zeitraum.",
+			"generated": "Bericht erfolgreich erstellt",
+			"generateError": "Bericht konnte nicht erstellt werden",
+			"reportTitle": "Ausgabenbericht",
+			"download": "Bericht herunterladen",
+			"totalExpenses": "Gesamtausgaben",
+			"expenseAccountBreakdown": "Ausgabenkontenaufschlüsselung",
+			"empty": "Keine Berichte gefunden",
+			"view": "Ansehen",
+			"viewSubtitle": "Detaillierten Ausgabenbericht ansehen",
+			"notFound": "Bericht nicht gefunden",
+			"form": {
+				"expenseAccount": "Ausgabenkonto",
+				"allExpenseAccounts": "Alle Ausgabenkonten",
+				"startDate": "Startdatum",
+				"endDate": "Enddatum",
+				"currency": "Berichtswährung"
+			},
+			"table": {
+				"period": "Zeitraum",
+				"totalExpenses": "Gesamtausgaben",
+				"generatedAt": "Erstellt am",
+				"actions": "Aktionen",
+				"expenseAccount": "Ausgabenkonto",
+				"expenseCount": "Anzahl der Ausgaben"
+			}
+		},
+		"currencies": {
+			"title": "Währungen",
+			"description": "Verwalte Währungen mit Umrechnungskursen und Formatierungsoptionen für deinen Arbeitsbereich. Alle Kurse sind relativ zu USD.",
+			"add": "Währung hinzufügen",
+			"edit": "Währung bearbeiten",
+			"delete": "Währung löschen",
+			"created": "Währung erfolgreich erstellt",
+			"createError": "Währung konnte nicht erstellt werden",
+			"updated": "Währung erfolgreich aktualisiert",
+			"updateError": "Währung konnte nicht aktualisiert werden",
+			"deleted": "Währung erfolgreich gelöscht",
+			"deleteError": "Währung konnte nicht gelöscht werden",
+			"deleteDescription": "Bist du sicher, dass du die Währungskonfiguration für {currency} löschen möchtest?",
+			"dialogDescription": "Konfiguriere Umrechnungskurs und Formatierungsoptionen von {baseCurrency} zur ausgewählten Währung.",
+			"empty": "Keine Währungen konfiguriert",
+			"form": {
+				"currency": "Währung",
+				"selectCurrency": "Währung auswählen",
+				"rate": "Umrechnungskurs",
+				"rateHint": "1 {baseCurrency} = ? (Betrag in Zielwährung)",
+				"symbol": "Währungssymbol",
+				"symbolHint": "Gib das Währungssymbol ein (z.B. $, €, £)",
+				"symbolPosition": "Symbolposition",
+				"symbolLeft": "Links (z.B. $100)",
+				"symbolRight": "Rechts (z.B. 100€)",
+				"separator": "Tausendertrennzeichen",
+				"separatorHint": "Zeichen zur Trennung von Tausenderstellen (z.B. Komma, Leerzeichen)",
+				"decimalSeparator": "Dezimaltrennzeichen",
+				"decimalSeparatorHint": "Zeichen für den Dezimalpunkt"
+			},
+			"validation": {
+				"required": "Währung und Kurs sind erforderlich",
+				"invalidRate": "Kurs muss eine positive Zahl sein",
+				"invalidSeparator": "Trennzeichen müssen einzelne Zeichen sein",
+				"separatorsMustDiffer": "Tausender- und Dezimaltrennzeichen müssen unterschiedlich sein"
+			},
+			"deleteError": {
+				"expenseAccountsInUse": "Währung {currency} kann nicht gelöscht werden. Sie wird derzeit von {count} Ausgabenkonto(n) verwendet. Bitte aktualisiere oder lösche diese Ausgabenkonten zuerst.",
+				"expensesInUse": "Währung {currency} kann nicht gelöscht werden. Sie wird derzeit von {count} Ausgabe(n) verwendet. Bitte aktualisiere oder lösche diese Ausgaben zuerst."
+			},
+			"table": {
+				"currency": "Währung",
+				"rate": "Kurs",
+				"symbol": "Symbol",
+				"updatedAt": "Zuletzt aktualisiert",
+				"actions": "Aktionen"
+			}
+		},
+		"currencyRates": {
+			"title": "Währungskurse",
+			"description": "Verwalte Währungsumrechnungskurse für deinen Arbeitsbereich. Alle Kurse sind relativ zu USD.",
+			"add": "Währungskurs hinzufügen",
+			"edit": "Währungskurs bearbeiten",
+			"delete": "Währungskurs löschen",
+			"created": "Währungskurs erfolgreich erstellt",
+			"createError": "Währungskurs konnte nicht erstellt werden",
+			"updated": "Währungskurs erfolgreich aktualisiert",
+			"updateError": "Währungskurs konnte nicht aktualisiert werden",
+			"deleted": "Währungskurs erfolgreich gelöscht",
+			"deleteError": "Währungskurs konnte nicht gelöscht werden",
+			"deleteDescription": "Bist du sicher, dass du den Umrechnungskurs für {currency} löschen möchtest?",
+			"dialogDescription": "Setze den Umrechnungskurs von {baseCurrency} zur ausgewählten Währung.",
+			"empty": "Keine Währungskurse konfiguriert",
+			"form": {
+				"currency": "Währung",
+				"selectCurrency": "Währung auswählen",
+				"rate": "Umrechnungskurs",
+				"rateHint": "1 {baseCurrency} = ? (Betrag in Zielwährung)"
+			},
+			"validation": {
+				"required": "Währung und Kurs sind erforderlich",
+				"invalidRate": "Kurs muss eine positive Zahl sein"
+			},
+			"table": {
+				"currency": "Währung",
+				"rate": "Kurs",
+				"updatedAt": "Zuletzt aktualisiert",
+				"actions": "Aktionen"
+			}
+		}
 	}
 }

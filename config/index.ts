@@ -49,6 +49,7 @@ export const config = {
 			"image-proxy",
 			"onboarding",
 			"choose-plan",
+			"expenses",
 		],
 	},
 	// Users
@@ -107,7 +108,32 @@ export const config = {
 		// define the name of the buckets for the different types of files
 		bucketNames: {
 			avatars: process.env.NEXT_PUBLIC_AVATARS_BUCKET_NAME ?? "avatars",
+			receipts:
+				process.env.NEXT_PUBLIC_RECEIPTS_BUCKET_NAME ?? "receipts",
 		},
+	},
+	// Expenses
+	expenses: {
+		// Default expense categories (can be extended by admins)
+		defaultCategories: [
+			"Subscription",
+			"Team Salary",
+			"One-time",
+			"Team Member Loan",
+		],
+		// Default reminder days before subscription renewal
+		defaultReminderDays: 7,
+		// Report generation settings
+		reportGeneration: {
+			// Default billing period start day (1 = 1st of month)
+			defaultBillingPeriodStart: 1,
+			// Default billing period end day (31 = last day of month)
+			defaultBillingPeriodEnd: 31,
+		},
+		// Supported currencies (single currency per workspace)
+		supportedCurrencies: ["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "BDT"],
+		// Default base currency for conversion rates
+		defaultBaseCurrency: "USD",
 	},
 	// Payments
 	payments: {

@@ -39,6 +39,8 @@ model User {
   purchases          Purchase[]
   members            Member[]
   twofactors         TwoFactor[]
+  expenses           Expense[]
+  loanPayments       LoanPayment[]
 
   @@unique([email])
   @@unique([username])
@@ -149,6 +151,11 @@ model Organization {
   invitations        Invitation[]
   purchases          Purchase[]
   usageMetrics       UsageMetric[]
+  expenseAccounts    ExpenseAccount[]
+  expenseCategories  ExpenseCategory[]
+  paymentMethods     PaymentMethod[]
+  expenseReports     ExpenseReport[]
+  currencyRates      CurrencyRate[]
 
   @@unique([slug])
   @@index([customDomain])
@@ -242,4 +249,219 @@ model UsageMetric {
   @@index([organizationId])
   @@index([metricType])
   @@map("usageMetric")
+}
+
+model ExpenseAccount {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  currency       String       @default("USD")
+  type           String       @default("business")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  teamMembers    TeamMember[]
+  expenses       Expense[]
+  expenseReports ExpenseReport[]
+
+  @@index([organizationId])
+  @@map("expenseAccount")
+}
+
+model ExpenseCategory {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  type           String       @default("custom")
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  expenses       Expense[]
+
+  @@index([organizationId])
+  @@map("expenseCategory")
+}
+
+model TeamMember {
+  id          String          @id @default(cuid())
+  businessId String
+  expenseAccount   ExpenseAccount        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  email       String?
+  position    String?
+  joinedDate  DateTime?
+  salary      Decimal?
+  status      String          @default("active")
+  notes       String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  expenses    Expense[]
+  loans       TeamMemberLoan[]
+
+  @@index([businessId])
+  @@map("teamMember")
+}
+
+model PaymentMethod {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  type           String
+  lastFourDigits String?
+  isDefault      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  expenses       Expense[]
+
+  @@index([organizationId])
+  @@map("paymentMethod")
+}
+
+model Expense {
+  id             String        @id @default(cuid())
+  businessId     String
+  expenseAccount       ExpenseAccount      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  categoryId    String
+  category       ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  teamMemberId   String?
+  teamMember     TeamMember?  @relation(fields: [teamMemberId], references: [id], onDelete: SetNull)
+  paymentMethodId String?
+  paymentMethod  PaymentMethod? @relation(fields: [paymentMethodId], references: [id], onDelete: SetNull)
+  title          String
+  description    String?
+  amount         Decimal
+  currency       String        @default("USD")
+  // Currency conversion tracking
+  conversionRate Decimal?      // Rate used at creation time (1 USD = rate * currency)
+  rateType       String?       // "default" or "custom"
+  baseCurrencyAmount Decimal?  // Amount in base currency (USD) at creation time
+  date           DateTime
+  receiptUrl     String?
+  status         String        @default("active")
+  metadata       Json?
+  createdBy      String
+  creator        User          @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  subscription   Subscription?
+  loan           TeamMemberLoan?
+
+  @@index([businessId])
+  @@index([categoryId])
+  @@index([teamMemberId])
+  @@index([date])
+  @@index([createdBy])
+  @@map("expense")
+}
+
+model Subscription {
+  id                String    @id @default(cuid())
+  expenseId         String    @unique
+  expense           Expense   @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  renewalDate       DateTime
+  renewalFrequency  String    @default("monthly")
+  autoRenew         Boolean   @default(true)
+  reminderDays     Int       @default(7)
+  nextReminderDate  DateTime?
+  cancelationDate   DateTime?
+  provider          String?
+  status            String    @default("active")
+  reminders         ExpenseReminder[]
+
+  @@index([expenseId])
+  @@index([renewalDate])
+  @@index([nextReminderDate])
+  @@index([status])
+  @@map("subscription")
+}
+
+model TeamMemberLoan {
+  id              String        @id @default(cuid())
+  expenseId       String        @unique
+  expense         Expense       @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  teamMemberId    String
+  teamMember      TeamMember    @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
+  principalAmount Decimal
+  remainingAmount Decimal
+  loanDate        DateTime
+  notes           String?
+  status          String        @default("active")
+  payments        LoanPayment[]
+
+  @@index([expenseId])
+  @@index([teamMemberId])
+  @@index([status])
+  @@map("teamMemberLoan")
+}
+
+model LoanPayment {
+  id           String        @id @default(cuid())
+  loanId       String
+  loan         TeamMemberLoan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  amount       Decimal
+  paymentDate  DateTime
+  paymentMethod String?
+  notes        String?
+  recordedBy   String
+  recorder     User          @relation(fields: [recordedBy], references: [id], onDelete: Restrict)
+  createdAt    DateTime      @default(now())
+
+  @@index([loanId])
+  @@map("loanPayment")
+}
+
+model ExpenseReport {
+  id                String       @id @default(cuid())
+  organizationId   String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  businessId        String?
+  expenseAccount          ExpenseAccount?    @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  reportPeriodStart DateTime
+  reportPeriodEnd   DateTime
+  totalExpenses     Decimal      @default(0)
+  reportCurrency    String       @default("USD")
+  categoryBreakdown Json?
+  reportData        Json
+  generatedAt       DateTime     @default(now())
+  emailSentAt       DateTime?
+
+  @@index([organizationId])
+  @@index([businessId])
+  @@map("expenseReport")
+}
+
+model CurrencyRate {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  fromCurrency   String       // Base currency (always USD)
+  toCurrency     String       // Target currency
+  rate           Decimal      // Conversion rate: 1 USD = rate * toCurrency
+  symbol         String?      // Currency symbol (e.g., $, €, £)
+  symbolPosition String       @default("left") // "left" or "right"
+  separator       String       @default(",") // Thousands separator (e.g., ",", ".", " ")
+  decimalSeparator String     @default(".") // Decimal separator (e.g., ".", ",")
+  updatedAt      DateTime     @default(now())
+  updatedBy      String?
+
+  @@unique([organizationId, toCurrency])
+  @@index([organizationId])
+  @@map("currencyRate")
+}
+
+model ExpenseReminder {
+  id            String       @id @default(cuid())
+  subscriptionId String
+  subscription  Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  reminderType  String
+  scheduledDate DateTime
+  sentDate      DateTime?
+  status        String       @default("pending")
+  emailContent  String?
+
+  @@index([subscriptionId])
+  @@index([scheduledDate])
+  @@index([status])
+  @@map("expenseReminder")
 }
