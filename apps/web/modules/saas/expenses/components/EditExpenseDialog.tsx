@@ -99,7 +99,7 @@ export function EditExpenseDialog({
 	});
 
 	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema),
+		resolver: zodResolver(formSchema) as any,
 		defaultValues: {
 			title: "",
 			description: "",
@@ -111,6 +111,14 @@ export function EditExpenseDialog({
 			paymentMethodId: "__none__",
 		},
 	});
+
+	// Check if expense is linked to subscription or is one-time
+	const isSubscriptionExpense = !!expense?.subscriptionId;
+	const categoryName = expense?.category?.name.toLowerCase() || "";
+	const isOneTimeExpense =
+		categoryName.includes("one-time") ||
+		categoryName.includes("one time") ||
+		categoryName === "one-time";
 
 	useEffect(() => {
 		if (expense) {
@@ -129,19 +137,30 @@ export function EditExpenseDialog({
 
 	const onSubmit = async (values: FormValues) => {
 		try {
-			await expensesApi.expenses.update({
+			// For subscription and one-time expenses, only update allowed fields
+			const updateData: any = {
 				id: expenseId,
-				...values,
-				teamMemberId:
+				title: values.title,
+				description: values.description,
+				amount: values.amount,
+				date: values.date,
+			};
+
+			// Only include category, teamMember, paymentMethod if not subscription/one-time
+			if (!isSubscriptionExpense && !isOneTimeExpense) {
+				updateData.categoryId = values.categoryId;
+				updateData.teamMemberId =
 					values.teamMemberId && values.teamMemberId !== "__none__"
 						? values.teamMemberId
-						: null,
-				paymentMethodId:
+						: null;
+				updateData.paymentMethodId =
 					values.paymentMethodId &&
 					values.paymentMethodId !== "__none__"
 						? values.paymentMethodId
-						: null,
-			});
+						: null;
+			}
+
+			await expensesApi.expenses.update(updateData);
 
 			toast.success(t("expenses.updated"));
 			queryClient.invalidateQueries({
@@ -161,7 +180,15 @@ export function EditExpenseDialog({
 				<DialogHeader>
 					<DialogTitle>{t("expenses.edit")}</DialogTitle>
 					<DialogDescription>
-						{t("expenses.editDescription")}
+						{isSubscriptionExpense
+							? t(
+									"expenses.editSubscriptionExpenseDescription",
+								) ||
+								"You can only edit title, amount, date, and description for subscription expenses."
+							: isOneTimeExpense
+								? t("expenses.editOneTimeExpenseDescription") ||
+									"You can only edit title, amount, date, and description for one-time expenses."
+								: t("expenses.editDescription")}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -200,11 +227,15 @@ export function EditExpenseDialog({
 												type="number"
 												step="0.01"
 												{...field}
+												value={field.value || ""}
 												onChange={(e) =>
 													field.onChange(
-														Number.parseFloat(
-															e.target.value,
-														),
+														e.target.value
+															? Number.parseFloat(
+																	e.target
+																		.value,
+																)
+															: 0,
 													)
 												}
 											/>
@@ -235,9 +266,12 @@ export function EditExpenseDialog({
 												}
 												onChange={(e) =>
 													field.onChange(
-														new Date(
-															e.target.value,
-														),
+														e.target.value
+															? new Date(
+																	e.target
+																		.value,
+																)
+															: new Date(),
 													)
 												}
 											/>

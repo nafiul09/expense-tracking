@@ -4,6 +4,7 @@ export * from "./expense-accounts";
 export * from "./expense-categories";
 export * from "./expenses";
 export * from "./loans";
+export * from "./standalone-loans";
 export * from "./organizations";
 export * from "./payment-methods";
 export * from "./purchases";

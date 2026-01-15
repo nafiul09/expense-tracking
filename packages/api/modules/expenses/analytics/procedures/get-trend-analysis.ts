@@ -26,7 +26,7 @@ export const getTrendAnalysisProcedure = protectedProcedure
 		const business = await getBusinessById(businessId);
 
 		if (!business) {
-			throw new ORPCError("BAD_REQUEST", "Business not found");
+			throw new ORPCError("BAD_REQUEST", { message: "Business not found" });
 		}
 
 		const membership = await verifyOrganizationMembership(
@@ -35,7 +35,7 @@ export const getTrendAnalysisProcedure = protectedProcedure
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", { message: "Not a member of this workspace" });
 		}
 
 		const trends = await getTrendAnalysis(

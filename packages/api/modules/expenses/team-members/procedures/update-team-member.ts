@@ -30,24 +30,33 @@ export const updateTeamMemberProcedure = protectedProcedure
 		const teamMember = await getTeamMemberById(id);
 
 		if (!teamMember) {
-			throw new ORPCError("NOT_FOUND", "Team member not found");
+			throw new ORPCError("NOT_FOUND", {
+				message: "Team member not found",
+			});
+		}
+
+		if (!teamMember.expenseAccount) {
+			throw new ORPCError("BAD_REQUEST", {
+				message: "Team member not associated with an expense account",
+			});
 		}
 
 		const membership = await verifyOrganizationMembership(
-			teamMember.business.organizationId,
+			teamMember.expenseAccount.organizationId,
 			user.id,
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", {
+				message: "Not a member of this workspace",
+			});
 		}
 
 		// Only owners and admins can update team members
 		if (membership.role !== "owner" && membership.role !== "admin") {
-			throw new ORPCError(
-				"FORBIDDEN",
-				"Only owners and admins can update team members",
-			);
+			throw new ORPCError("FORBIDDEN", {
+				message: "Only owners and admins can update team members",
+			});
 		}
 
 		const updatedTeamMember = await updateTeamMember({

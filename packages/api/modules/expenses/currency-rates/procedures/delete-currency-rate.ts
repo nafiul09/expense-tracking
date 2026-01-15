@@ -1,9 +1,9 @@
 import { ORPCError } from "@orpc/server";
 import {
-	deleteCurrencyRate,
-	getCurrencyRateById,
 	countExpenseAccountsByCurrency,
 	countExpensesByCurrency,
+	deleteCurrencyRate,
+	getCurrencyRateById,
 } from "@repo/database";
 import z from "zod";
 import { protectedProcedure } from "../../../../orpc/procedures";
@@ -26,7 +26,9 @@ export const deleteCurrencyRateProcedure = protectedProcedure
 		const rate = await getCurrencyRateById(input.id);
 
 		if (!rate) {
-			throw new ORPCError("NOT_FOUND", "Currency rate not found");
+			throw new ORPCError("NOT_FOUND", {
+				message: "Currency rate not found",
+			});
 		}
 
 		const membership = await verifyOrganizationMembership(
@@ -35,15 +37,16 @@ export const deleteCurrencyRateProcedure = protectedProcedure
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", {
+				message: "Not a member of this workspace",
+			});
 		}
 
 		// Only owners and admins can delete currency rates
 		if (membership.role !== "owner" && membership.role !== "admin") {
-			throw new ORPCError(
-				"FORBIDDEN",
-				"Only owners and admins can delete currency rates",
-			);
+			throw new ORPCError("FORBIDDEN", {
+				message: "Only owners and admins can delete currency rates",
+			});
 		}
 
 		// Check if currency is used by any expense accounts
@@ -53,10 +56,9 @@ export const deleteCurrencyRateProcedure = protectedProcedure
 		);
 
 		if (expenseAccountCount > 0) {
-			throw new ORPCError(
-				"BAD_REQUEST",
-				`Cannot delete currency ${rate.toCurrency}. It is currently used by ${expenseAccountCount} expense account(s). Please update or delete those expense accounts first.`,
-			);
+			throw new ORPCError("BAD_REQUEST", {
+				message: `Cannot delete currency ${rate.toCurrency}. It is currently used by ${expenseAccountCount} expense account(s). Please update or delete those expense accounts first.`,
+			});
 		}
 
 		// Check if currency is used by any expenses
@@ -66,10 +68,9 @@ export const deleteCurrencyRateProcedure = protectedProcedure
 		);
 
 		if (expenseCount > 0) {
-			throw new ORPCError(
-				"BAD_REQUEST",
-				`Cannot delete currency ${rate.toCurrency}. It is currently used by ${expenseCount} expense(s). Please update or delete those expenses first.`,
-			);
+			throw new ORPCError("BAD_REQUEST", {
+				message: `Cannot delete currency ${rate.toCurrency}. It is currently used by ${expenseCount} expense(s). Please update or delete those expenses first.`,
+			});
 		}
 
 		await deleteCurrencyRate(input.id);

@@ -5,7 +5,6 @@ import { formatCurrency } from "@repo/utils";
 import { expensesApi } from "@saas/expenses/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@ui/components/badge";
-import { Button } from "@ui/components/button";
 import { Card } from "@ui/components/card";
 import {
 	Table,
@@ -15,10 +14,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@ui/components/table";
-import { PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
-import { CreateTeamMemberDialog } from "./CreateTeamMemberDialog";
 
 interface TeamMemberListProps {
 	businessId: string;
@@ -26,7 +22,6 @@ interface TeamMemberListProps {
 
 export function TeamMemberList({ businessId }: TeamMemberListProps) {
 	const t = useTranslations();
-	const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
 	const { data: teamMembers, isLoading } = useQuery({
 		queryKey: ["teamMembers", businessId],
@@ -61,16 +56,6 @@ export function TeamMemberList({ businessId }: TeamMemberListProps) {
 
 	return (
 		<div className="space-y-4">
-			<div className="flex items-center justify-between">
-				<h3 className="text-lg font-semibold">
-					{t("expenses.teamMembers.title")}
-				</h3>
-				<Button onClick={() => setCreateDialogOpen(true)}>
-					<PlusIcon className="mr-2 size-4" />
-					{t("expenses.teamMembers.create")}
-				</Button>
-			</div>
-
 			<Card>
 				<Table>
 					<TableHeader>
@@ -83,6 +68,9 @@ export function TeamMemberList({ businessId }: TeamMemberListProps) {
 							</TableHead>
 							<TableHead>
 								{t("expenses.teamMembers.table.salary")}
+							</TableHead>
+							<TableHead>
+								{t("teamMembers.loanBalance")}
 							</TableHead>
 							<TableHead>
 								{t("expenses.teamMembers.table.status")}
@@ -109,6 +97,18 @@ export function TeamMemberList({ businessId }: TeamMemberListProps) {
 											: "-"}
 									</TableCell>
 									<TableCell>
+										{member.totalLoanBalance &&
+										Number(member.totalLoanBalance) > 0
+											? formatCurrency(
+													Number(
+														member.totalLoanBalance,
+													),
+													businessCurrency,
+													currencyRate || undefined,
+												)
+											: t("teamMembers.noLoans")}
+									</TableCell>
+									<TableCell>
 										<Badge
 											variant={
 												member.status === "active"
@@ -116,7 +116,15 @@ export function TeamMemberList({ businessId }: TeamMemberListProps) {
 													: "secondary"
 											}
 										>
-											{member.status}
+											{member.status === "active"
+												? t(
+														"expenses.teamMembers.status.active",
+													)
+												: member.status === "inactive"
+													? t(
+															"expenses.teamMembers.status.inactive",
+														)
+													: member.status}
 										</Badge>
 									</TableCell>
 								</TableRow>
@@ -124,7 +132,7 @@ export function TeamMemberList({ businessId }: TeamMemberListProps) {
 						) : (
 							<TableRow>
 								<TableCell
-									colSpan={4}
+									colSpan={5}
 									className="text-center py-8 text-muted-foreground"
 								>
 									{t("expenses.teamMembers.empty")}
@@ -134,12 +142,6 @@ export function TeamMemberList({ businessId }: TeamMemberListProps) {
 					</TableBody>
 				</Table>
 			</Card>
-
-			<CreateTeamMemberDialog
-				open={createDialogOpen}
-				onOpenChange={setCreateDialogOpen}
-				businessId={businessId}
-			/>
 		</div>
 	);
 }

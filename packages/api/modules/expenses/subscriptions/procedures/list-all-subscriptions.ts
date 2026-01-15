@@ -10,13 +10,16 @@ export const listAllSubscriptionsProcedure = protectedProcedure
 		path: "/expenses/subscriptions/all",
 		tags: ["Expenses"],
 		summary: "List all subscriptions across all expense accounts",
-		description: "List subscriptions across all expense accounts for an organization with optional filters",
+		description:
+			"List subscriptions across all expense accounts for an organization with optional filters",
 	})
 	.input(
 		z.object({
 			organizationId: z.string(),
 			accountIds: z.array(z.string()).optional(),
-			status: z.enum(["active", "cancelled", "paused"]).optional(),
+			status: z
+				.enum(["active", "inactive", "cancelled", "paused"])
+				.optional(),
 			renewalFrequency: z.string().optional(),
 			nextRenewalStart: z.coerce.date().optional(),
 			nextRenewalEnd: z.coerce.date().optional(),
@@ -31,7 +34,7 @@ export const listAllSubscriptionsProcedure = protectedProcedure
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", { message: "Not a member of this workspace" });
 		}
 
 		const subscriptions = await getAllSubscriptionsByOrganizationId(

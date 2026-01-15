@@ -23,16 +23,16 @@ export const getLoanHistoryProcedure = protectedProcedure
 		const loan = await getLoanById(id);
 
 		if (!loan) {
-			throw new ORPCError("NOT_FOUND", "Loan not found");
+			throw new ORPCError("NOT_FOUND", { message: "Loan not found" });
 		}
 
 		const membership = await verifyOrganizationMembership(
-			loan.expense.business.organizationId,
+			loan.expense.expenseAccount.organizationId,
 			user.id,
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", { message: "Not a member of this workspace" });
 		}
 
 		return loan;

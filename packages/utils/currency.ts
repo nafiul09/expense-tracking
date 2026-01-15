@@ -129,3 +129,83 @@ export function formatCurrency(
 		currency,
 	}).format(amount);
 }
+
+/**
+ * Format expense/loan amount showing converted amount in account currency with original amount in brackets
+ * @param originalAmount - Original amount entered by user
+ * @param originalCurrency - Original currency code
+ * @param accountCurrency - Expense account's default currency
+ * @param rates - Array of currency rates
+ * @param baseCurrencyAmount - Optional: Amount in USD (if already calculated)
+ * @param conversionRate - Optional: Rate from original currency to USD
+ * @returns Formatted string (e.g., "1,200 BDT ($10)" or "$10" if same currency)
+ */
+export function formatAmountWithOriginal(
+	originalAmount: number,
+	originalCurrency: string,
+	accountCurrency: string,
+	rates: CurrencyRate[],
+	baseCurrencyAmount?: number | null,
+	conversionRate?: number | null,
+): string {
+	// If same currency, no conversion needed
+	if (originalCurrency === accountCurrency) {
+		const accountRate = rates.find((r) => r.toCurrency === accountCurrency);
+		return formatCurrency(originalAmount, accountCurrency, accountRate);
+	}
+
+	// Calculate converted amount: Original Currency → USD → Account Currency
+	let amountInUSD: number;
+
+	// Use baseCurrencyAmount if available (already calculated)
+	if (baseCurrencyAmount != null) {
+		amountInUSD = Number(baseCurrencyAmount);
+	} else if (conversionRate != null) {
+		// Use conversionRate if available
+		// conversionRate is FROM original currency TO USD, so divide
+		amountInUSD = originalAmount / Number(conversionRate);
+	} else {
+		// Calculate from rates
+		if (originalCurrency === config.expenses.defaultBaseCurrency) {
+			amountInUSD = originalAmount;
+		} else {
+			const rate = rates.find((r) => r.toCurrency === originalCurrency);
+			if (!rate) {
+				// Fallback: just show original amount
+				return formatCurrency(originalAmount, originalCurrency);
+			}
+			// rate.rate means "1 USD = rate.rate * toCurrency", so divide to convert TO USD
+			amountInUSD = originalAmount / Number(rate.rate);
+		}
+	}
+
+	// Convert USD to account currency
+	let convertedAmount: number;
+	if (accountCurrency === config.expenses.defaultBaseCurrency) {
+		convertedAmount = amountInUSD;
+	} else {
+		const accountRate = rates.find((r) => r.toCurrency === accountCurrency);
+		if (!accountRate) {
+			// Fallback: just show original amount
+			return formatCurrency(originalAmount, originalCurrency);
+		}
+		convertedAmount = amountInUSD * Number(accountRate.rate);
+	}
+
+	// Format: ConvertedAmount AccountCurrency (OriginalAmount OriginalCurrency)
+	const accountRate = rates.find((r) => r.toCurrency === accountCurrency);
+	const originalRate = rates.find((r) => r.toCurrency === originalCurrency);
+
+	const formattedConverted = formatCurrency(
+		convertedAmount,
+		accountCurrency,
+		accountRate,
+	);
+	const formattedOriginal = formatCurrency(
+		originalAmount,
+		originalCurrency,
+		originalRate,
+	);
+
+	return `${formattedConverted} (${formattedOriginal})`;
+}

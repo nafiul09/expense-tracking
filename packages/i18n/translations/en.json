@@ -230,11 +230,13 @@
 	},
 	"common": {
 		"cancel": "Cancel",
+		"close": "Close",
 		"save": "Save",
 		"delete": "Delete",
 		"create": "Create",
 		"none": "None",
 		"notAvailable": "Not available",
+		"default": "Default",
 		"loading": "Loading...",
 		"selectDate": "Select date",
 		"showing": "Showing {start} to {end} of {total}",
@@ -1093,6 +1095,8 @@
 		"createDescription": "Add a new expense to track your spending.",
 		"edit": "Edit Expense",
 		"editDescription": "Update the details of this expense.",
+		"editSubscriptionExpenseDescription": "You can only edit title, amount, date, and description for subscription expenses.",
+		"editOneTimeExpenseDescription": "You can only edit title, amount, date, and description for one-time expenses.",
 		"status": {
 			"active": "Active",
 			"cancelled": "Cancelled"
@@ -1101,6 +1105,8 @@
 		"tabs": {
 			"expenses": "Expenses",
 			"subscriptions": "Subscriptions",
+			"oneTime": "One-Time",
+			"teamMembers": "Team Members",
 			"team": "Team Members",
 			"loans": "Loans"
 		},
@@ -1117,8 +1123,12 @@
 		"form": {
 			"title": "Title",
 			"amount": "Amount",
+			"amountType": "Amount Type",
+			"useDefaultAmount": "Default Amount",
+			"useCustomAmount": "Custom Amount",
 			"date": "Date",
 			"category": "Category",
+			"categoryType": "Expense Type",
 			"selectCategory": "Select a category",
 			"teamMember": "Team Member",
 			"selectTeamMember": "Select a team member",
@@ -1129,7 +1139,20 @@
 			"useDefaultRate": "Use Default Rate",
 			"useCustomRate": "Use Custom Rate",
 			"customRate": "Custom Rate",
-			"customRateHint": "1 {baseCurrency} = ? (amount in {currency})"
+			"customRateHint": "1 {baseCurrency} = ? (amount in {currency})",
+			"renewalFrequency": "Renewal Frequency",
+			"renewalDate": "Renewal Date",
+			"provider": "Provider",
+			"salaryType": "Salary Type",
+			"salaryTypeDefault": "Default Salary",
+			"salaryTypeCustom": "Custom Amount",
+			"amountHint": "Amount in {currency}",
+			"convertedAmount": "({amount} {currency})",
+			"teamMemberSalary": "Team member's current salary: {amount}",
+			"currency": "Currency",
+			"salaryMonth": "Salary Month",
+			"conversionBreakdown": "Conversion Breakdown",
+			"recordedAs": "Will be recorded as"
 		},
 		"table": {
 			"title": "Title",
@@ -1219,6 +1242,15 @@
 			"delete": "Delete"
 		},
 		"subscriptions": {
+			"create": "Create Subscription",
+			"createDescription": "Create a new subscription. If start date is today or past, an expense will be created automatically.",
+			"created": "Subscription created successfully",
+			"createError": "Failed to create subscription",
+			"categoryNotFound": "Subscription category not found. Please create a subscription category first.",
+			"selectSubscription": "Select Subscription",
+			"createNew": "Create New Subscription",
+			"createFromTab": "Please create subscription from the Subscriptions tab first",
+			"startDate": "Start Date",
 			"table": {
 				"name": "Name",
 				"amount": "Amount",
@@ -1229,8 +1261,22 @@
 				"frequency": "Frequency",
 				"nextRenewal": "Next Renewal"
 			},
+			"currentAmount": "Current",
+			"totalPaid": "Total Paid",
+			"edit": "Edit Subscription",
+			"editDescription": "Update subscription details and settings",
+			"updated": "Subscription updated successfully",
+			"updateError": "Failed to update subscription",
+			"reminderDays": "Reminder Days Before Renewal",
+			"renewalDatePastError": "Renewal date cannot be in the past",
+			"renewalType": {
+				"label": "Renewal Type",
+				"fromPaymentDate": "From Payment Date",
+				"fromRenewalDate": "From Renewal Date"
+			},
 			"status": {
 				"active": "Active",
+				"inactive": "Inactive",
 				"cancelled": "Cancelled",
 				"paused": "Paused"
 			},
@@ -1275,7 +1321,8 @@
 			"status": {
 				"active": "Active",
 				"partial": "Partial",
-				"paid": "Paid"
+				"paid": "Paid",
+				"cancelled": "Cancelled"
 			},
 			"empty": "No loans found",
 			"consolidated": {
@@ -1297,6 +1344,10 @@
 				"expenseAccounts": "Expense Accounts",
 				"teamMembers": "Team Members"
 			}
+		},
+		"oneTime": {
+			"title": "One-Time Expenses",
+			"empty": "No one-time expenses found"
 		},
 		"analytics": {
 			"title": "Analytics",
@@ -1457,5 +1508,43 @@
 				"actions": "Actions"
 			}
 		}
+	},
+	"loans": {
+		"create": "Give Loan",
+		"recordPayment": "Record Payment",
+		"viewHistory": "View Payment History",
+		"currentBalance": "Current Balance",
+		"principalAmount": "Principal Amount",
+		"totalOutstanding": "Total Outstanding",
+		"paymentHistory": "Payment History",
+		"form": {
+			"selectTeamMember": "Select team member",
+			"loanAmount": "Loan Amount",
+			"paymentAmount": "Payment Amount",
+			"loanDate": "Loan Date",
+			"paymentDate": "Payment Date",
+			"remainingBalance": "Remaining Balance: {amount}",
+			"createDescription": "Record a loan given to a team member",
+			"recordPaymentDescription": "Record a payment towards this loan",
+			"willDeduct": "Will deduct {amount} from loan balance"
+		},
+		"status": {
+			"active": "Active",
+			"paid": "Paid",
+			"cancelled": "Cancelled"
+		},
+		"messages": {
+			"created": "Loan recorded successfully",
+			"createError": "Failed to create loan",
+			"paymentRecorded": "Payment recorded successfully",
+			"paymentError": "Failed to record payment",
+			"paidInFull": "Loan has been paid in full",
+			"paymentExceedsBalance": "Payment amount cannot exceed current balance"
+		},
+		"selectLoanFirst": "Select a loan from the table first"
+	},
+	"teamMembers": {
+		"loanBalance": "Loan Balance",
+		"noLoans": "No outstanding loans"
 	}
 }

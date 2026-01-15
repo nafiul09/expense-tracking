@@ -28,29 +28,34 @@ export const createLoanProcedure = protectedProcedure
 		const expense = await getExpenseById(expenseId);
 
 		if (!expense) {
-			throw new ORPCError("BAD_REQUEST", "Expense not found");
+			throw new ORPCError("BAD_REQUEST", {
+				message: "Expense not found",
+			});
 		}
 
 		const membership = await verifyOrganizationMembership(
-			expense.business.organizationId,
+			expense.expenseAccount.organizationId,
 			user.id,
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", {
+				message: "Not a member of this workspace",
+			});
 		}
 
 		const teamMember = await getTeamMemberById(teamMemberId);
 
 		if (!teamMember) {
-			throw new ORPCError("BAD_REQUEST", "Team member not found");
+			throw new ORPCError("BAD_REQUEST", {
+				message: "Team member not found",
+			});
 		}
 
 		if (teamMember.businessId !== expense.businessId) {
-			throw new ORPCError(
-				"BAD_REQUEST",
-				"Team member does not belong to this business",
-			);
+			throw new ORPCError("BAD_REQUEST", {
+				message: "Team member does not belong to this business",
+			});
 		}
 
 		const loan = await createLoan({

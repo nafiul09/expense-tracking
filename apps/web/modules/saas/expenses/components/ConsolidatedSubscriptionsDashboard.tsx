@@ -1,7 +1,7 @@
 "use client";
 
 import { config } from "@repo/config";
-import { formatCurrency } from "@repo/utils";
+import { formatAmountWithOriginal, formatCurrency } from "@repo/utils";
 import { expensesApi } from "@saas/expenses/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@ui/components/badge";
@@ -51,7 +51,18 @@ export default function ConsolidatedSubscriptionsDashboard({
 		queryFn: () =>
 			expensesApi.subscriptions.listAll({
 				organizationId,
-				...filters,
+				accountIds:
+					filters.accountIds.length > 0
+						? filters.accountIds
+						: undefined,
+				status: filters.status as
+					| "active"
+					| "cancelled"
+					| "paused"
+					| undefined,
+				renewalFrequency: filters.renewalFrequency,
+				nextRenewalStart: filters.nextRenewalStart,
+				nextRenewalEnd: filters.nextRenewalEnd,
 			}),
 	});
 
@@ -78,7 +89,7 @@ export default function ConsolidatedSubscriptionsDashboard({
 			(s) => s.status === "active",
 		);
 		const totalMonthlyCost = activeSubscriptions.reduce((sum, s) => {
-			const amount = Number(s.expense.amount);
+			const amount = Number(s.currentAmount || 0);
 			if (s.renewalFrequency === "monthly") {
 				return sum + amount;
 			}
@@ -355,8 +366,7 @@ export default function ConsolidatedSubscriptionsDashboard({
 									subscription.renewalDate,
 								);
 								const daysUntilRenewal = Math.ceil(
-									(renewalDate.getTime() -
-										new Date().getTime()) /
+									(renewalDate.getTime() - Date.now()) /
 										(1000 * 60 * 60 * 24),
 								);
 								const isRenewingSoon =
@@ -373,33 +383,26 @@ export default function ConsolidatedSubscriptionsDashboard({
 										}
 									>
 										<TableCell className="font-medium">
-											{subscription.expense.title}
+											{subscription.title}
 										</TableCell>
 										<TableCell>
 											{subscription.provider || "-"}
 										</TableCell>
 										<TableCell>
-											{formatCurrency(
+											{formatAmountWithOriginal(
 												Number(
-													subscription.expense.amount,
+													subscription.currentAmount ||
+														0,
 												),
-												subscription.expense.currency ||
-													subscription.expense
-														.expenseAccount
+												subscription.currency ||
+													subscription.expenseAccount
 														?.currency ||
-													config.expenses
-														.defaultBaseCurrency,
-												currencyRates?.find(
-													(r) =>
-														r.toCurrency ===
-														(subscription.expense
-															.currency ||
-															subscription.expense
-																.expenseAccount
-																?.currency ||
-															config.expenses
-																.defaultBaseCurrency),
-												),
+													"USD",
+												subscription.expenseAccount
+													?.currency || "USD",
+												currencyRates || [],
+												null,
+												null,
 											)}
 										</TableCell>
 										<TableCell>
@@ -435,9 +438,8 @@ export default function ConsolidatedSubscriptionsDashboard({
 										</TableCell>
 										<TableCell>
 											<Badge variant="secondary">
-												{subscription.expense
-													.expenseAccount?.name ||
-													"-"}
+												{subscription.expenseAccount
+													?.name || "-"}
 											</Badge>
 										</TableCell>
 										<TableCell>
@@ -446,7 +448,10 @@ export default function ConsolidatedSubscriptionsDashboard({
 													subscription.status ===
 													"active"
 														? "default"
-														: "secondary"
+														: subscription.status ===
+																"inactive"
+															? "secondary"
+															: "outline"
 												}
 											>
 												{subscription.status ===
@@ -455,16 +460,21 @@ export default function ConsolidatedSubscriptionsDashboard({
 															"expenses.subscriptions.status.active",
 														)
 													: subscription.status ===
-															"cancelled"
+															"inactive"
 														? t(
-																"expenses.subscriptions.status.cancelled",
+																"expenses.subscriptions.status.inactive",
 															)
 														: subscription.status ===
-																"paused"
+																"cancelled"
 															? t(
-																	"expenses.subscriptions.status.paused",
+																	"expenses.subscriptions.status.cancelled",
 																)
-															: subscription.status}
+															: subscription.status ===
+																	"paused"
+																? t(
+																		"expenses.subscriptions.status.paused",
+																	)
+																: subscription.status}
 											</Badge>
 										</TableCell>
 									</TableRow>

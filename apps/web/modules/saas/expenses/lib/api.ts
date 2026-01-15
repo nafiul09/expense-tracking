@@ -1,66 +1,66 @@
 import { orpcClient } from "@shared/lib/orpc-client";
 
 export const expensesApi = {
-		// Expense Accounts
-		expenseAccounts: {
-			list: async (organizationId: string) => {
-				return orpcClient.expenses.expenseAccounts.list({ organizationId });
-			},
-			getDetails: async (id: string) => {
-				return orpcClient.expenses.expenseAccounts.getDetails({ id });
-			},
-			create: async (data: {
-				organizationId: string;
-				name: string;
-				description?: string;
-				currency?: string;
-				type?: "personal" | "business";
-			}) => {
-				return orpcClient.expenses.expenseAccounts.create(data);
-			},
-			update: async (data: {
-				id: string;
-				name?: string;
-				description?: string;
-				currency?: string;
-				type?: "personal" | "business";
-			}) => {
-				return orpcClient.expenses.expenseAccounts.update(data);
-			},
-			delete: async (id: string) => {
-				return orpcClient.expenses.expenseAccounts.delete({ id });
-			},
+	// Expense Accounts
+	expenseAccounts: {
+		list: async (organizationId: string) => {
+			return orpcClient.expenses.expenseAccounts.list({ organizationId });
 		},
-		// Legacy alias for backward compatibility
-		businesses: {
-			list: async (organizationId: string) => {
-				return orpcClient.expenses.expenseAccounts.list({ organizationId });
-			},
-			getDetails: async (id: string) => {
-				return orpcClient.expenses.expenseAccounts.getDetails({ id });
-			},
-			create: async (data: {
-				organizationId: string;
-				name: string;
-				description?: string;
-				currency?: string;
-				type?: "personal" | "business";
-			}) => {
-				return orpcClient.expenses.expenseAccounts.create(data);
-			},
-			update: async (data: {
-				id: string;
-				name?: string;
-				description?: string;
-				currency?: string;
-				type?: "personal" | "business";
-			}) => {
-				return orpcClient.expenses.expenseAccounts.update(data);
-			},
-			delete: async (id: string) => {
-				return orpcClient.expenses.expenseAccounts.delete({ id });
-			},
+		getDetails: async (id: string) => {
+			return orpcClient.expenses.expenseAccounts.getDetails({ id });
 		},
+		create: async (data: {
+			organizationId: string;
+			name: string;
+			description?: string;
+			currency?: string;
+			type?: "personal" | "business";
+		}) => {
+			return orpcClient.expenses.expenseAccounts.create(data);
+		},
+		update: async (data: {
+			id: string;
+			name?: string;
+			description?: string;
+			currency?: string;
+			type?: "personal" | "business";
+		}) => {
+			return orpcClient.expenses.expenseAccounts.update(data);
+		},
+		delete: async (id: string) => {
+			return orpcClient.expenses.expenseAccounts.delete({ id });
+		},
+	},
+	// Legacy alias for backward compatibility
+	businesses: {
+		list: async (organizationId: string) => {
+			return orpcClient.expenses.expenseAccounts.list({ organizationId });
+		},
+		getDetails: async (id: string) => {
+			return orpcClient.expenses.expenseAccounts.getDetails({ id });
+		},
+		create: async (data: {
+			organizationId: string;
+			name: string;
+			description?: string;
+			currency?: string;
+			type?: "personal" | "business";
+		}) => {
+			return orpcClient.expenses.expenseAccounts.create(data);
+		},
+		update: async (data: {
+			id: string;
+			name?: string;
+			description?: string;
+			currency?: string;
+			type?: "personal" | "business";
+		}) => {
+			return orpcClient.expenses.expenseAccounts.update(data);
+		},
+		delete: async (id: string) => {
+			return orpcClient.expenses.expenseAccounts.delete({ id });
+		},
+	},
 
 	// Currencies
 	currencies: {
@@ -289,6 +289,46 @@ export const expensesApi = {
 		}) => {
 			return orpcClient.expenses.subscriptions.create(data);
 		},
+		createStandalone: async (data: {
+			expenseAccountId: string;
+			categoryId: string;
+			title: string;
+			description?: string;
+			provider?: string;
+			currentAmount: number;
+			currency: string;
+			rateType?: "default" | "custom";
+			customRate?: number;
+			startDate: Date;
+			renewalDate?: Date;
+			renewalFrequency?: "monthly" | "yearly" | "weekly";
+			renewalType?: "from_payment_date" | "from_renewal_date";
+			autoRenew?: boolean;
+			reminderDays?: number;
+			paymentMethodId?: string;
+			status?: "active" | "inactive";
+		}) => {
+			return orpcClient.expenses.subscriptions.createStandalone(data);
+		},
+		getDetails: async (id: string) => {
+			return orpcClient.expenses.subscriptions.getDetails({ id });
+		},
+		update: async (data: {
+			id: string;
+			title?: string;
+			description?: string;
+			provider?: string;
+			currentAmount?: number;
+			currency?: string;
+			renewalDate?: Date;
+			renewalFrequency?: "monthly" | "yearly" | "weekly";
+			renewalType?: "from_payment_date" | "from_renewal_date";
+			autoRenew?: boolean;
+			reminderDays?: number;
+			status?: "active" | "inactive";
+		}) => {
+			return orpcClient.expenses.subscriptions.update(data);
+		},
 		cancel: async (id: string) => {
 			return orpcClient.expenses.subscriptions.cancel({ id });
 		},
@@ -342,6 +382,46 @@ export const expensesApi = {
 			notes?: string;
 		}) => {
 			return orpcClient.expenses.loans.addPayment(data);
+		},
+		// Standalone loan functions
+		createStandalone: async (data: {
+			teamMemberId: string;
+			businessId: string;
+			amount: number;
+			currency?: string;
+			rateType?: "default" | "custom";
+			customRate?: number;
+			loanDate: Date;
+			notes?: string;
+		}) => {
+			return orpcClient.expenses.loans.createStandalone(data);
+		},
+		listStandalone: async (data: {
+			organizationId: string;
+			accountIds?: string[];
+			teamMemberIds?: string[];
+			status?: string;
+			loanDateStart?: Date;
+			loanDateEnd?: Date;
+		}) => {
+			return orpcClient.expenses.loans.listStandalone(data);
+		},
+		getStandaloneDetails: async (id: string) => {
+			return orpcClient.expenses.loans.getStandaloneDetails({ id });
+		},
+		recordStandalonePayment: async (data: {
+			id: string;
+			amount: number;
+			currency: string;
+			conversionRate?: number;
+			paymentDate: Date;
+			paymentType?: "payment" | "disbursement";
+			notes?: string;
+		}) => {
+			return orpcClient.expenses.loans.recordStandalonePayment(data);
+		},
+		cancelStandalone: async (id: string) => {
+			return orpcClient.expenses.loans.cancelStandalone({ id });
 		},
 	},
 
@@ -407,7 +487,12 @@ export const expensesApi = {
 		generateCustom: async (data: {
 			organizationId: string;
 			reportName?: string;
-			reportType?: "all_categories" | "subscription" | "team_salary" | "one_time" | "team_member_loan";
+			reportType?:
+				| "all_categories"
+				| "subscription"
+				| "team_salary"
+				| "one_time"
+				| "team_member_loan";
 			accountIds?: string[];
 			reportPeriodStart: Date;
 			reportPeriodEnd: Date;

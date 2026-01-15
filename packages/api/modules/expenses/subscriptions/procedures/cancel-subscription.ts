@@ -23,24 +23,27 @@ export const cancelSubscriptionProcedure = protectedProcedure
 		const subscription = await getSubscriptionById(id);
 
 		if (!subscription) {
-			throw new ORPCError("NOT_FOUND", "Subscription not found");
+			throw new ORPCError("NOT_FOUND", {
+				message: "Subscription not found",
+			});
 		}
 
 		const membership = await verifyOrganizationMembership(
-			subscription.expense.business.organizationId,
+			subscription.expenseAccount.organizationId,
 			user.id,
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", {
+				message: "Not a member of this workspace",
+			});
 		}
 
 		// Only owners and admins can cancel subscriptions
 		if (membership.role !== "owner" && membership.role !== "admin") {
-			throw new ORPCError(
-				"FORBIDDEN",
-				"Only owners and admins can cancel subscriptions",
-			);
+			throw new ORPCError("FORBIDDEN", {
+				message: "Only owners and admins can cancel subscriptions",
+			});
 		}
 
 		const cancelledSubscription = await cancelSubscription(id);

@@ -23,7 +23,9 @@ export const deleteExpenseAccountProcedure = protectedProcedure
 		const expenseAccount = await getExpenseAccountById(id);
 
 		if (!expenseAccount) {
-			throw new ORPCError("NOT_FOUND", "Expense account not found");
+			throw new ORPCError("NOT_FOUND", {
+				message: "Expense account not found",
+			});
 		}
 
 		const membership = await verifyOrganizationMembership(
@@ -32,15 +34,16 @@ export const deleteExpenseAccountProcedure = protectedProcedure
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", {
+				message: "Not a member of this workspace",
+			});
 		}
 
 		// Only owners and admins can delete expense accounts
 		if (membership.role !== "owner" && membership.role !== "admin") {
-			throw new ORPCError(
-				"FORBIDDEN",
-				"Only owners and admins can delete expense accounts",
-			);
+			throw new ORPCError("FORBIDDEN", {
+				message: "Only owners and admins can delete expense accounts",
+			});
 		}
 
 		await deleteExpenseAccount(id);

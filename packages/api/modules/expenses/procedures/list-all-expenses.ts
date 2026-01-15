@@ -35,7 +35,7 @@ export const listAllExpensesProcedure = protectedProcedure
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", { message: "Not a member of this workspace" });
 		}
 
 		const result = await getAllExpensesByOrganizationId(organizationId, options);

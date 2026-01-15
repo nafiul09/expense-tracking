@@ -31,27 +31,47 @@ export const createSubscriptionProcedure = protectedProcedure
 		const expense = await getExpenseById(expenseId);
 
 		if (!expense) {
-			throw new ORPCError("BAD_REQUEST", "Expense not found");
+			throw new ORPCError("BAD_REQUEST", { message: "Expense not found" });
 		}
 
 		const membership = await verifyOrganizationMembership(
-			expense.business.organizationId,
+			expense.expenseAccount.organizationId,
 			user.id,
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", { message: "Not a member of this workspace" });
 		}
 
 		// Calculate next reminder date
 		const nextReminderDate = new Date(input.renewalDate);
 		nextReminderDate.setDate(nextReminderDate.getDate() - reminderDays);
 
+		// Create subscription using new model (legacy: links to existing expense)
 		const subscription = await createSubscription({
-			expenseId,
-			reminderDays,
+			expenseAccountId: expense.expenseAccount.id,
+			title: expense.title,
+			description: expense.description || undefined,
+			provider: input.provider,
+			currentAmount: Number(expense.amount),
+			currency:
+				expense.currency || expense.expenseAccount.currency || "USD",
+			startDate: expense.date,
+			renewalDate: input.renewalDate,
+			renewalFrequency: input.renewalFrequency,
+			renewalType: "from_renewal_date",
+			autoRenew: input.autoRenew,
+			reminderDays: input.reminderDays,
 			nextReminderDate,
-			...data,
+			status: input.status,
+			expenseId: expense.id, // Legacy field for migration
+		});
+
+		// Link expense to subscription
+		const { db } = await import("@repo/database");
+		await db.expense.update({
+			where: { id: expense.id },
+			data: { subscriptionId: subscription.id },
 		});
 
 		return subscription;

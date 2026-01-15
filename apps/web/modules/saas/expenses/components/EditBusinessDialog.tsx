@@ -85,7 +85,7 @@ export function EditBusinessDialog({
 			: baseCurrencies;
 
 	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema),
+		resolver: zodResolver(formSchema) as any,
 		defaultValues: {
 			name: "",
 			description: "",
@@ -100,7 +100,7 @@ export function EditBusinessDialog({
 				name: business.name,
 				description: business.description || "",
 				currency: business.currency,
-				type: business.type,
+				type: business.type as "personal" | "business",
 			});
 		}
 	}, [business, form]);
@@ -130,7 +130,9 @@ export function EditBusinessDialog({
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>{t("expenses.expenseAccounts.edit")}</DialogTitle>
+					<DialogTitle>
+						{t("expenses.expenseAccounts.edit")}
+					</DialogTitle>
 					<DialogDescription>
 						{t("expenses.expenseAccounts.editDescription")}
 					</DialogDescription>
@@ -163,7 +165,9 @@ export function EditBusinessDialog({
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										{t("expenses.expenseAccounts.description")}
+										{t(
+											"expenses.expenseAccounts.description",
+										)}
 									</FormLabel>
 									<FormControl>
 										<Textarea {...field} />
@@ -215,7 +219,9 @@ export function EditBusinessDialog({
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>
-											{t("expenses.expenseAccounts.currency")}
+											{t(
+												"expenses.expenseAccounts.currency",
+											)}
 										</FormLabel>
 										<Select
 											onValueChange={field.onChange}

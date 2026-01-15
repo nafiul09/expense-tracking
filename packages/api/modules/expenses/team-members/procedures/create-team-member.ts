@@ -41,9 +41,13 @@ export const createTeamMemberProcedure = protectedProcedure
 		let organizationId: string;
 		if (accountAssociations && accountAssociations.length > 0) {
 			// Verify all accounts belong to the same organization
-			const firstAccount = await getBusinessById(accountAssociations[0].accountId);
+			const firstAccount = await getBusinessById(
+				accountAssociations[0].accountId,
+			);
 			if (!firstAccount) {
-				throw new ORPCError("BAD_REQUEST", "Account not found");
+				throw new ORPCError("BAD_REQUEST", {
+					message: "Account not found",
+				});
 			}
 			organizationId = firstAccount.organizationId;
 
@@ -53,27 +57,32 @@ export const createTeamMemberProcedure = protectedProcedure
 				user.id,
 			);
 			if (!membership) {
-				throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+				throw new ORPCError("FORBIDDEN", {
+					message: "Not a member of this workspace",
+				});
 			}
 
 			// Verify all accounts belong to same organization
 			for (const assoc of accountAssociations) {
 				const account = await getBusinessById(assoc.accountId);
 				if (!account) {
-					throw new ORPCError("BAD_REQUEST", `Account ${assoc.accountId} not found`);
+					throw new ORPCError("BAD_REQUEST", {
+						message: `Account ${assoc.accountId} not found`,
+					});
 				}
-				if (account.organizationId !== organizationId) {
-					throw new ORPCError(
-						"BAD_REQUEST",
-						"All accounts must belong to the same organization",
-					);
-				}
+			if (account.organizationId !== organizationId) {
+				throw new ORPCError("BAD_REQUEST", {
+					message: "All accounts must belong to the same organization",
+				});
+			}
 			}
 		} else if (businessId) {
 			// Legacy support: single businessId
 			const business = await getBusinessById(businessId);
 			if (!business) {
-				throw new ORPCError("BAD_REQUEST", "Business not found");
+				throw new ORPCError("BAD_REQUEST", {
+					message: "Business not found",
+				});
 			}
 			organizationId = business.organizationId;
 
@@ -82,22 +91,29 @@ export const createTeamMemberProcedure = protectedProcedure
 				user.id,
 			);
 			if (!membership) {
-				throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+				throw new ORPCError("FORBIDDEN", {
+					message: "Not a member of this workspace",
+				});
 			}
 		} else {
-			throw new ORPCError(
-				"BAD_REQUEST",
-				"Either businessId or accountAssociations must be provided",
-			);
+			throw new ORPCError("BAD_REQUEST", {
+				message: "Either businessId or accountAssociations must be provided",
+			});
 		}
 
 		// Only owners and admins can create team members
-		const membership = await verifyOrganizationMembership(organizationId, user.id);
-		if (membership && membership.role !== "owner" && membership.role !== "admin") {
-			throw new ORPCError(
-				"FORBIDDEN",
-				"Only owners and admins can create team members",
-			);
+		const membership = await verifyOrganizationMembership(
+			organizationId,
+			user.id,
+		);
+		if (
+			membership &&
+			membership.role !== "owner" &&
+			membership.role !== "admin"
+		) {
+			throw new ORPCError("FORBIDDEN", {
+				message: "Only owners and admins can create team members",
+			});
 		}
 
 		const teamMember = await createTeamMember({

@@ -1,7 +1,7 @@
 "use client";
 
 import { config } from "@repo/config";
-import { formatCurrency } from "@repo/utils";
+import { formatAmountWithOriginal, formatCurrency } from "@repo/utils";
 import { expensesApi } from "@saas/expenses/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@ui/components/badge";
@@ -48,9 +48,9 @@ export default function ConsolidatedLoansDashboard({
 	const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
 	const { data: loans, isLoading } = useQuery({
-		queryKey: ["all-loans", organizationId, filters],
+		queryKey: ["all-standalone-loans", organizationId, filters],
 		queryFn: () =>
-			expensesApi.loans.listAll({
+			expensesApi.loans.listStandalone({
 				organizationId,
 				...filters,
 			}),
@@ -93,12 +93,12 @@ export default function ConsolidatedLoansDashboard({
 			(l) => l.status === "active" || l.status === "partial",
 		);
 		const totalOutstanding = activeLoans.reduce(
-			(sum, l) => sum + Number(l.remainingAmount),
+			(sum, l) => sum + Number(l.currentBalance),
 			0,
 		);
 		const totalPaid = loans.reduce((sum, l) => {
 			const principal = Number(l.principalAmount);
-			const remaining = Number(l.remainingAmount);
+			const remaining = Number(l.currentBalance);
 			return sum + (principal - remaining);
 		}, 0);
 
@@ -375,12 +375,28 @@ export default function ConsolidatedLoansDashboard({
 						{loans && loans.length > 0 ? (
 							loans.map((loan) => {
 								const principal = Number(loan.principalAmount);
-								const remaining = Number(loan.remainingAmount);
+								const remaining = Number(loan.currentBalance);
 								const paid = principal - remaining;
 								const progress =
 									principal > 0
 										? (paid / principal) * 100
 										: 0;
+								const accountCurrency =
+									loan.expenseAccount?.currency || "USD";
+
+								// Calculate original amount from baseCurrencyAmount and conversionRate
+								// conversionRate is FROM original currency TO USD
+								// So: baseCurrencyAmount = originalAmount / conversionRate
+								// Therefore: originalAmount = baseCurrencyAmount * conversionRate
+								let originalPrincipal: number | null = null;
+								if (
+									loan.baseCurrencyAmount &&
+									loan.conversionRate
+								) {
+									originalPrincipal =
+										Number(loan.baseCurrencyAmount) *
+										Number(loan.conversionRate);
+								}
 
 								return (
 									<TableRow key={loan.id}>
@@ -394,40 +410,70 @@ export default function ConsolidatedLoansDashboard({
 											)}
 										</TableCell>
 										<TableCell>
-											{formatCurrency(
-												principal,
-												loan.expense.expenseAccount
-													?.currency ||
-													config.expenses
-														.defaultBaseCurrency,
-												currencyRates?.find(
-													(r) =>
-														r.toCurrency ===
-														(loan.expense
-															.expenseAccount
-															?.currency ||
-															config.expenses
-																.defaultBaseCurrency),
-												),
-											)}
+											{originalPrincipal != null &&
+											loan.currency !== accountCurrency
+												? formatAmountWithOriginal(
+														originalPrincipal,
+														loan.currency || "USD",
+														accountCurrency,
+														currencyRates || [],
+														loan.baseCurrencyAmount
+															? Number(
+																	loan.baseCurrencyAmount,
+																)
+															: null,
+														loan.conversionRate
+															? Number(
+																	loan.conversionRate,
+																)
+															: null,
+													)
+												: formatAmountWithOriginal(
+														principal,
+														accountCurrency,
+														accountCurrency,
+														currencyRates || [],
+														null,
+														null,
+													)}
 										</TableCell>
 										<TableCell>
-											{formatCurrency(
-												remaining,
-												loan.expense.expenseAccount
-													?.currency ||
-													config.expenses
-														.defaultBaseCurrency,
-												currencyRates?.find(
-													(r) =>
-														r.toCurrency ===
-														(loan.expense
-															.expenseAccount
-															?.currency ||
-															config.expenses
-																.defaultBaseCurrency),
-												),
-											)}
+											{originalPrincipal != null &&
+											loan.currency !== accountCurrency
+												? (() => {
+														const remainingRatio =
+															remaining /
+															principal;
+														const originalRemaining =
+															originalPrincipal! *
+															remainingRatio;
+														return formatAmountWithOriginal(
+															originalRemaining,
+															loan.currency ||
+																"USD",
+															accountCurrency,
+															currencyRates || [],
+															loan.baseCurrencyAmount
+																? Number(
+																		loan.baseCurrencyAmount,
+																	) *
+																		remainingRatio
+																: null,
+															loan.conversionRate
+																? Number(
+																		loan.conversionRate,
+																	)
+																: null,
+														);
+													})()
+												: formatAmountWithOriginal(
+														remaining,
+														accountCurrency,
+														accountCurrency,
+														currencyRates || [],
+														null,
+														null,
+													)}
 										</TableCell>
 										<TableCell>
 											<div className="space-y-1">
@@ -442,8 +488,8 @@ export default function ConsolidatedLoansDashboard({
 										</TableCell>
 										<TableCell>
 											<Badge variant="secondary">
-												{loan.expense.expenseAccount
-													?.name || "-"}
+												{loan.expenseAccount?.name ||
+													"-"}
 											</Badge>
 										</TableCell>
 										<TableCell>

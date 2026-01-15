@@ -31,7 +31,7 @@ export const listAllLoansProcedure = protectedProcedure
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", { message: "Not a member of this workspace" });
 		}
 
 		const loans = await getAllLoansByOrganizationId(organizationId, options);

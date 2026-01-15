@@ -186,13 +186,15 @@ export async function compareBusinesses(
 
 	// Fetch business names
 	const businessIds = breakdown.map((b) => b.businessId);
-	const businesses = await db.business.findMany({
+	const businesses = await db.expenseAccount.findMany({
 		where: {
 			id: { in: businessIds },
 		},
 	});
 
-	const businessMap = new Map(businesses.map((b) => [b.id, b.name]));
+	const businessMap = new Map(
+		businesses.map((b: { id: string; name: string }) => [b.id, b.name]),
+	);
 
 	return breakdown.map((b) => ({
 		businessId: b.businessId,

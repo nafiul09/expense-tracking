@@ -27,31 +27,31 @@ export const addLoanPaymentProcedure = protectedProcedure
 		const loan = await getLoanById(id);
 
 		if (!loan) {
-			throw new ORPCError("NOT_FOUND", "Loan not found");
+			throw new ORPCError("NOT_FOUND", { message: "Loan not found" });
 		}
 
 		const membership = await verifyOrganizationMembership(
-			loan.expense.business.organizationId,
+			loan.expense.expenseAccount.organizationId,
 			user.id,
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", {
+				message: "Not a member of this workspace",
+			});
 		}
 
 		// Only owners and admins can record payments
 		if (membership.role !== "owner" && membership.role !== "admin") {
-			throw new ORPCError(
-				"FORBIDDEN",
-				"Only owners and admins can record loan payments",
-			);
+			throw new ORPCError("FORBIDDEN", {
+				message: "Only owners and admins can record loan payments",
+			});
 		}
 
 		if (Number(loan.remainingAmount) < amount) {
-			throw new ORPCError(
-				"BAD_REQUEST",
-				"Payment amount exceeds remaining loan amount",
-			);
+			throw new ORPCError("BAD_REQUEST", {
+				message: "Payment amount exceeds remaining loan amount",
+			});
 		}
 
 		const payment = await addLoanPayment({

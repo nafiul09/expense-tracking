@@ -33,7 +33,9 @@ export const createPaymentMethodProcedure = protectedProcedure
 		const organization = await getOrganizationById(organizationId);
 
 		if (!organization) {
-			throw new ORPCError("BAD_REQUEST", "Organization not found");
+			throw new ORPCError("BAD_REQUEST", {
+				message: "Organization not found",
+			});
 		}
 
 		const membership = await verifyOrganizationMembership(
@@ -42,15 +44,16 @@ export const createPaymentMethodProcedure = protectedProcedure
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", {
+				message: "Not a member of this workspace",
+			});
 		}
 
 		// Only owners and admins can create payment methods
 		if (membership.role !== "owner" && membership.role !== "admin") {
-			throw new ORPCError(
-				"FORBIDDEN",
-				"Only owners and admins can create payment methods",
-			);
+			throw new ORPCError("FORBIDDEN", {
+				message: "Only owners and admins can create payment methods",
+			});
 		}
 
 		const paymentMethod = await createPaymentMethod({

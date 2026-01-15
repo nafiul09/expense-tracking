@@ -15,10 +15,15 @@ import { MoreVerticalIcon, PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { CreateExpenseDialog } from "./CreateExpenseDialog";
+import { CreateLoanDialog } from "./CreateLoanDialog";
+import { CreateSubscriptionDialog } from "./CreateSubscriptionDialog";
+import { CreateTeamMemberDialog } from "./CreateTeamMemberDialog";
 import { DeleteBusinessDialog } from "./DeleteBusinessDialog";
 import { EditBusinessDialog } from "./EditBusinessDialog";
 import { ExpenseList } from "./ExpenseList";
 import { LoanList } from "./LoanList";
+import { OneTimeExpenseList } from "./OneTimeExpenseList";
+import { RecordLoanPaymentDialog } from "./RecordLoanPaymentDialog";
 import { SubscriptionList } from "./SubscriptionList";
 import { TeamMemberList } from "./TeamMemberList";
 
@@ -30,7 +35,13 @@ export default function BusinessDashboard({
 	businessId,
 }: BusinessDashboardProps) {
 	const t = useTranslations();
+	const [activeTab, setActiveTab] = useState("expenses");
 	const [createExpenseOpen, setCreateExpenseOpen] = useState(false);
+	const [createSubscriptionOpen, setCreateSubscriptionOpen] = useState(false);
+	const [createLoanOpen, setCreateLoanOpen] = useState(false);
+	const [createTeamMemberOpen, setCreateTeamMemberOpen] = useState(false);
+	const [adjustLoanOpen, setAdjustLoanOpen] = useState(false);
+	const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -77,35 +88,99 @@ export default function BusinessDashboard({
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
-					<Button onClick={() => setCreateExpenseOpen(true)}>
-						<PlusIcon className="mr-2 size-4" />
-						{t("expenses.create")}
-					</Button>
 				</div>
 			</div>
 
-			<Tabs defaultValue="expenses" className="w-full">
-				<TabsList>
-					<TabsTrigger value="expenses">
-						{t("expenses.tabs.expenses")}
-					</TabsTrigger>
-					<TabsTrigger value="subscriptions">
-						{t("expenses.tabs.subscriptions")}
-					</TabsTrigger>
-					<TabsTrigger value="team">
-						{t("expenses.tabs.team")}
-					</TabsTrigger>
-					<TabsTrigger value="loans">
-						{t("expenses.tabs.loans")}
-					</TabsTrigger>
-				</TabsList>
+			<Tabs
+				defaultValue="expenses"
+				className="w-full"
+				onValueChange={setActiveTab}
+			>
+				<div className="flex items-center justify-between gap-4">
+					<TabsList className="inline-flex h-10 items-center justify-start">
+						<TabsTrigger value="expenses">
+							{t("expenses.tabs.expenses")}
+						</TabsTrigger>
+						<TabsTrigger value="subscriptions">
+							{t("expenses.tabs.subscriptions")}
+						</TabsTrigger>
+						<TabsTrigger value="one-time">
+							{t("expenses.tabs.oneTime")}
+						</TabsTrigger>
+						<div className="h-6 w-px bg-border mx-2" />
+						<TabsTrigger value="team">
+							{t("expenses.tabs.teamMembers")}
+						</TabsTrigger>
+						<TabsTrigger value="loans">
+							{t("expenses.tabs.loans")}
+						</TabsTrigger>
+					</TabsList>
+					<div className="flex items-center gap-2">
+						{activeTab === "loans" ? (
+							<>
+								<Button
+									variant="outline"
+									onClick={() => setCreateLoanOpen(true)}
+								>
+									<PlusIcon className="mr-2 size-4" />
+									{t("loans.create")}
+								</Button>
+								<Button
+									onClick={() => {
+										// If no loan selected, open dialog to select one
+										if (!selectedLoanId) {
+											// Show a message or open a selection dialog
+											return;
+										}
+										setAdjustLoanOpen(true);
+									}}
+									disabled={!selectedLoanId}
+									title={
+										!selectedLoanId
+											? t("loans.selectLoanFirst") ||
+												"Select a loan first"
+											: undefined
+									}
+								>
+									<PlusIcon className="mr-2 size-4" />
+									{t("loans.recordPayment") ||
+										"Record Payment"}
+								</Button>
+							</>
+						) : activeTab === "team" ? (
+							<Button
+								onClick={() => setCreateTeamMemberOpen(true)}
+							>
+								<PlusIcon className="mr-2 size-4" />
+								{t("expenses.teamMembers.create")}
+							</Button>
+						) : activeTab === "subscriptions" ? (
+							<Button
+								onClick={() => setCreateSubscriptionOpen(true)}
+							>
+								<PlusIcon className="mr-2 size-4" />
+								{t("expenses.subscriptions.create") ||
+									"Create Subscription"}
+							</Button>
+						) : (
+							<Button onClick={() => setCreateExpenseOpen(true)}>
+								<PlusIcon className="mr-2 size-4" />
+								{t("expenses.create")}
+							</Button>
+						)}
+					</div>
+				</div>
 
 				<TabsContent value="expenses">
-					<ExpenseList businessId={businessId} />
+					<ExpenseList businessId={businessId} showAllTypes />
 				</TabsContent>
 
 				<TabsContent value="subscriptions">
 					<SubscriptionList businessId={businessId} />
+				</TabsContent>
+
+				<TabsContent value="one-time">
+					<OneTimeExpenseList businessId={businessId} />
 				</TabsContent>
 
 				<TabsContent value="team">
@@ -113,7 +188,10 @@ export default function BusinessDashboard({
 				</TabsContent>
 
 				<TabsContent value="loans">
-					<LoanList businessId={businessId} />
+					<LoanList
+						businessId={businessId}
+						onLoanSelect={setSelectedLoanId}
+					/>
 				</TabsContent>
 			</Tabs>
 
@@ -122,6 +200,38 @@ export default function BusinessDashboard({
 				onOpenChange={setCreateExpenseOpen}
 				businessId={businessId}
 			/>
+
+			<CreateSubscriptionDialog
+				open={createSubscriptionOpen}
+				onOpenChange={setCreateSubscriptionOpen}
+				businessId={businessId}
+			/>
+
+			<CreateLoanDialog
+				open={createLoanOpen}
+				onOpenChange={setCreateLoanOpen}
+				businessId={businessId}
+			/>
+
+			<CreateTeamMemberDialog
+				open={createTeamMemberOpen}
+				onOpenChange={setCreateTeamMemberOpen}
+				businessId={businessId}
+			/>
+
+			{selectedLoanId && (
+				<RecordLoanPaymentDialog
+					open={adjustLoanOpen}
+					onOpenChange={(open) => {
+						setAdjustLoanOpen(open);
+						if (!open) {
+							setSelectedLoanId(null);
+						}
+					}}
+					loanId={selectedLoanId}
+					businessId={businessId}
+				/>
+			)}
 
 			{business && (
 				<>

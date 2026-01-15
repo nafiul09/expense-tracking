@@ -1,14 +1,19 @@
-import type { SubscriptionUpdateInput } from "../generated/models/Subscription";
 import { db } from "../client";
+import type { SubscriptionUpdateInput } from "../generated/models/Subscription";
 
 export async function getSubscriptionById(id: string) {
 	return db.subscription.findUnique({
 		where: { id },
 		include: {
-			expense: {
+			expenseAccount: true,
+			expenses: {
 				include: {
-					expenseAccount: true,
 					category: true,
+					teamMember: true,
+					paymentMethod: true,
+				},
+				orderBy: {
+					date: "desc",
 				},
 			},
 			reminders: {
@@ -21,12 +26,19 @@ export async function getSubscriptionById(id: string) {
 }
 
 export async function getSubscriptionByExpenseId(expenseId: string) {
-	return db.subscription.findUnique({
-		where: { expenseId },
+	return db.subscription.findFirst({
+		where: {
+			expenses: {
+				some: {
+					id: expenseId,
+				},
+			},
+		},
 		include: {
-			expense: {
-				include: {
-					expenseAccount: true,
+			expenseAccount: true,
+			expenses: {
+				where: {
+					id: expenseId,
 				},
 			},
 		},
@@ -38,9 +50,7 @@ export async function getSubscriptionsByBusinessId(
 	status?: string,
 ) {
 	const where: any = {
-		expense: {
-			businessId,
-		},
+		expenseAccountId: businessId,
 	};
 
 	if (status) {
@@ -50,16 +60,21 @@ export async function getSubscriptionsByBusinessId(
 	return db.subscription.findMany({
 		where,
 		include: {
-			expense: {
-				include: {
-					expenseAccount: {
-						select: {
-							id: true,
-							name: true,
-							currency: true,
-						},
-					},
-					category: true,
+			expenseAccount: {
+				select: {
+					id: true,
+					name: true,
+					currency: true,
+				},
+			},
+			expenses: {
+				select: {
+					id: true,
+					amount: true,
+					date: true,
+				},
+				orderBy: {
+					date: "desc",
 				},
 			},
 		},
@@ -80,15 +95,13 @@ export async function getAllSubscriptionsByOrganizationId(
 	},
 ) {
 	const where: any = {
-		expense: {
-			expenseAccount: {
-				organizationId,
-			},
+		expenseAccount: {
+			organizationId,
 		},
 	};
 
 	if (options?.accountIds && options.accountIds.length > 0) {
-		where.expense.businessId = { in: options.accountIds };
+		where.expenseAccountId = { in: options.accountIds };
 	}
 
 	if (options?.status) {
@@ -112,16 +125,21 @@ export async function getAllSubscriptionsByOrganizationId(
 	return db.subscription.findMany({
 		where,
 		include: {
-			expense: {
-				include: {
-					expenseAccount: {
-						select: {
-							id: true,
-							name: true,
-							currency: true,
-						},
-					},
-					category: true,
+			expenseAccount: {
+				select: {
+					id: true,
+					name: true,
+					currency: true,
+				},
+			},
+			expenses: {
+				select: {
+					id: true,
+					amount: true,
+					date: true,
+				},
+				orderBy: {
+					date: "desc",
 				},
 			},
 		},
@@ -131,34 +149,34 @@ export async function getAllSubscriptionsByOrganizationId(
 	});
 }
 
-export async function getUpcomingRenewals(
-	businessId: string,
-	days: number = 30,
-) {
+export async function getUpcomingRenewals(businessId: string, days = 30) {
 	const endDate = new Date();
 	endDate.setDate(endDate.getDate() + days);
 
 	return db.subscription.findMany({
 		where: {
-			expense: {
-				businessId,
-			},
+			expenseAccountId: businessId,
 			status: "active",
 			renewalDate: {
 				lte: endDate,
 			},
 		},
 		include: {
-			expense: {
-				include: {
-					expenseAccount: {
-						select: {
-							id: true,
-							name: true,
-							currency: true,
-						},
-					},
-					category: true,
+			expenseAccount: {
+				select: {
+					id: true,
+					name: true,
+					currency: true,
+				},
+			},
+			expenses: {
+				select: {
+					id: true,
+					amount: true,
+					date: true,
+				},
+				orderBy: {
+					date: "desc",
 				},
 			},
 		},
@@ -169,14 +187,21 @@ export async function getUpcomingRenewals(
 }
 
 export async function createSubscription(data: {
-	expenseId: string;
+	expenseAccountId: string;
+	title: string;
+	description?: string;
+	provider?: string;
+	currentAmount: number;
+	currency?: string;
+	startDate: Date;
 	renewalDate: Date;
 	renewalFrequency?: string;
+	renewalType?: string;
 	autoRenew?: boolean;
 	reminderDays?: number;
 	nextReminderDate?: Date;
-	provider?: string;
 	status?: string;
+	expenseId?: string; // Legacy field for migration
 }) {
 	return db.subscription.create({
 		data,
@@ -202,4 +227,40 @@ export async function cancelSubscription(id: string) {
 			autoRenew: false,
 		},
 	});
+}
+
+export async function deactivateSubscription(id: string) {
+	return db.subscription.update({
+		where: { id },
+		data: {
+			status: "inactive",
+		},
+	});
+}
+
+export async function deleteSubscription(id: string) {
+	// First, unlink all expenses from this subscription
+	await db.expense.updateMany({
+		where: { subscriptionId: id },
+		data: { subscriptionId: null },
+	});
+
+	// Then delete the subscription
+	return db.subscription.delete({
+		where: { id },
+	});
+}
+
+// Calculate total paid for a subscription (sum of all linked expenses)
+export async function getSubscriptionTotalPaid(subscriptionId: string) {
+	const result = await db.expense.aggregate({
+		where: {
+			subscriptionId,
+		},
+		_sum: {
+			amount: true,
+		},
+	});
+
+	return result._sum.amount || 0;
 }

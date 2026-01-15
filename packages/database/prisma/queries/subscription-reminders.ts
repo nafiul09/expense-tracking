@@ -12,17 +12,13 @@ export async function getSubscriptionsNeedingReminder() {
 			},
 		},
 		include: {
-			expense: {
+			expenseAccount: {
 				include: {
-					business: {
+					organization: {
 						include: {
-							organization: {
+							members: {
 								include: {
-									members: {
-										include: {
-											user: true,
-										},
-									},
+									user: true,
 								},
 							},
 						},

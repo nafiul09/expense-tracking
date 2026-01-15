@@ -1,6 +1,8 @@
 import { db } from "../client";
 import type { CurrencyRate } from "../generated/client";
 
+export type { CurrencyRate };
+
 export async function getCurrencyRatesByOrganization(
 	organizationId: string,
 ): Promise<CurrencyRate[]> {

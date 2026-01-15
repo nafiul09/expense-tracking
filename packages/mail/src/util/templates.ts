@@ -24,9 +24,13 @@ export async function getTemplate<T extends TemplateId>({
 		translations,
 	});
 
+	const mailTemplate =
+		translations.mail[templateId as keyof Messages["mail"]];
 	const subject =
-		"subject" in translations.mail[templateId as keyof Messages["mail"]]
-			? translations.mail[templateId].subject
+		mailTemplate &&
+		"subject" in mailTemplate &&
+		typeof mailTemplate.subject === "string"
+			? mailTemplate.subject
 			: "";
 
 	const html = await render(email);

@@ -19,9 +19,8 @@ export async function GET(request: Request) {
 		const baseUrl = getBaseUrl();
 
 		for (const subscription of subscriptions) {
-			const expense = subscription.expense;
-			const business = expense.business;
-			const organization = business.organization;
+			const expenseAccount = subscription.expenseAccount;
+			const organization = expenseAccount.organization;
 
 			// Calculate next reminder date
 			const nextReminderDate = new Date(subscription.renewalDate);
@@ -34,19 +33,20 @@ export async function GET(request: Request) {
 				const user = member.user;
 				if (!user.email) continue;
 
-				const url = `${baseUrl}/${organization.slug}/expenses/${business.id}/subscriptions/${subscription.id}`;
+				const url = `${baseUrl}/${organization.slug}/expense-accounts/${expenseAccount.id}/subscriptions/${subscription.id}`;
 
 				await sendEmail({
 					to: user.email,
 					templateId: "subscriptionRenewalReminder",
 					context: {
 						url,
-						subscriptionName: expense.title,
+						subscriptionName: subscription.title,
 						renewalDate:
 							subscription.renewalDate.toLocaleDateString(),
-						businessName: business.name,
-						amount: Number(expense.amount),
-						currency: expense.currency,
+						businessName: expenseAccount.name,
+						amount: Number(subscription.currentAmount),
+						currency:
+							subscription.currency || expenseAccount.currency,
 					},
 				});
 			}

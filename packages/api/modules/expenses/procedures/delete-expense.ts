@@ -23,24 +23,25 @@ export const deleteExpenseProcedure = protectedProcedure
 		const expense = await getExpenseById(id);
 
 		if (!expense) {
-			throw new ORPCError("NOT_FOUND", "Expense not found");
+			throw new ORPCError("NOT_FOUND", { message: "Expense not found" });
 		}
 
 		const membership = await verifyOrganizationMembership(
-			expense.business.organizationId,
+			expense.expenseAccount.organizationId,
 			user.id,
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", {
+				message: "Not a member of this workspace",
+			});
 		}
 
 		// Only owners and admins can delete expenses
 		if (membership.role !== "owner" && membership.role !== "admin") {
-			throw new ORPCError(
-				"FORBIDDEN",
-				"Only owners and admins can delete expenses",
-			);
+			throw new ORPCError("FORBIDDEN", {
+				message: "Only owners and admins can delete expenses",
+			});
 		}
 
 		await deleteExpense(id);

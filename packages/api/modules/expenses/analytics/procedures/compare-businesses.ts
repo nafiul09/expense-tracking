@@ -25,7 +25,7 @@ export const compareBusinessesProcedure = protectedProcedure
 		const organization = await getOrganizationById(organizationId);
 
 		if (!organization) {
-			throw new ORPCError("BAD_REQUEST", "Organization not found");
+			throw new ORPCError("BAD_REQUEST", { message: "Organization not found" });
 		}
 
 		const membership = await verifyOrganizationMembership(
@@ -34,7 +34,7 @@ export const compareBusinessesProcedure = protectedProcedure
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", { message: "Not a member of this workspace" });
 		}
 
 		const comparison = await compareBusinesses(

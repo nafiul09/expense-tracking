@@ -46,7 +46,9 @@ export const generateMonthlyReportProcedure = protectedProcedure
 		const organization = await getOrganizationById(organizationId);
 
 		if (!organization) {
-			throw new ORPCError("BAD_REQUEST", "Organization not found");
+			throw new ORPCError("BAD_REQUEST", {
+				message: "Organization not found",
+			});
 		}
 
 		const membership = await verifyOrganizationMembership(
@@ -55,15 +57,16 @@ export const generateMonthlyReportProcedure = protectedProcedure
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", {
+				message: "Not a member of this workspace",
+			});
 		}
 
 		// Only owners and admins can generate reports
 		if (membership.role !== "owner" && membership.role !== "admin") {
-			throw new ORPCError(
-				"FORBIDDEN",
-				"Only owners and admins can generate reports",
-			);
+			throw new ORPCError("FORBIDDEN", {
+				message: "Only owners and admins can generate reports",
+			});
 		}
 
 		// Get currency rates for conversion
@@ -119,6 +122,7 @@ export const generateMonthlyReportProcedure = protectedProcedure
 						0,
 					);
 					// Convert from base currency to report currency
+					const baseCurrency = config.expenses.defaultBaseCurrency;
 					if (reportCurrency !== baseCurrency) {
 						try {
 							convertedTotal = convertCurrency(

@@ -21,7 +21,9 @@ export const upsertCurrencyRateProcedure = protectedProcedure
 				.string()
 				.refine(
 					(currency) =>
-						config.expenses.supportedCurrencies.includes(currency),
+						config.expenses.supportedCurrencies.includes(
+							currency as (typeof config.expenses.supportedCurrencies)[number],
+						),
 					{
 						message: `Currency must be one of: ${config.expenses.supportedCurrencies.join(", ")}`,
 					},
@@ -43,23 +45,23 @@ export const upsertCurrencyRateProcedure = protectedProcedure
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", {
+				message: "Not a member of this workspace",
+			});
 		}
 
 		// Only owners and admins can manage currency rates
 		if (membership.role !== "owner" && membership.role !== "admin") {
-			throw new ORPCError(
-				"FORBIDDEN",
-				"Only owners and admins can manage currency rates",
-			);
+			throw new ORPCError("FORBIDDEN", {
+				message: "Only owners and admins can manage currency rates",
+			});
 		}
 
 		// Cannot set rate for base currency
 		if (input.toCurrency === config.expenses.defaultBaseCurrency) {
-			throw new ORPCError(
-				"BAD_REQUEST",
-				`Cannot set conversion rate for base currency (${config.expenses.defaultBaseCurrency})`,
-			);
+			throw new ORPCError("BAD_REQUEST", {
+				message: `Cannot set conversion rate for base currency (${config.expenses.defaultBaseCurrency})`,
+			});
 		}
 
 		const rate = await upsertCurrencyRate({

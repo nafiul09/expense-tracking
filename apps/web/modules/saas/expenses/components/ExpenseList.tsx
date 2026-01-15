@@ -1,7 +1,6 @@
 "use client";
 
-import { config } from "@repo/config";
-import { formatCurrency } from "@repo/utils";
+import { formatAmountWithOriginal } from "@repo/utils";
 import { expensesApi } from "@saas/expenses/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@ui/components/badge";
@@ -24,9 +23,10 @@ import { EditExpenseDialog } from "./EditExpenseDialog";
 
 interface ExpenseListProps {
 	businessId: string;
+	showAllTypes?: boolean;
 }
 
-export function ExpenseList({ businessId }: ExpenseListProps) {
+export function ExpenseList({ businessId, showAllTypes }: ExpenseListProps) {
 	const t = useTranslations();
 	const [filters, setFilters] = useState({
 		startDate: undefined as Date | undefined,
@@ -40,7 +40,7 @@ export function ExpenseList({ businessId }: ExpenseListProps) {
 	);
 
 	const { data: expenses, isLoading } = useQuery({
-		queryKey: ["expenses", businessId, filters],
+		queryKey: ["expenses", businessId, filters, showAllTypes],
 		queryFn: () =>
 			expensesApi.expenses.list({
 				businessId,
@@ -95,34 +95,37 @@ export function ExpenseList({ businessId }: ExpenseListProps) {
 										</Badge>
 									</TableCell>
 									<TableCell>
-										{(() => {
-											const expenseCurrency =
-												expense.currency ||
-												business?.currency ||
-												config.expenses
-													.defaultBaseCurrency;
-											const expenseCurrencyRate =
-												expenseCurrency ===
-												config.expenses
-													.defaultBaseCurrency
-													? null
-													: currencyRates?.find(
-															(r) =>
-																r.toCurrency ===
-																expenseCurrency,
-														);
-											return formatCurrency(
-												Number(expense.amount),
-												expenseCurrency,
-												expenseCurrencyRate ||
-													undefined,
-											);
-										})()}
+										{formatAmountWithOriginal(
+											Number(expense.amount),
+											expense.currency || business?.currency || "USD",
+											business?.currency || "USD",
+											currencyRates || [],
+											expense.baseCurrencyAmount
+												? Number(expense.baseCurrencyAmount)
+												: null,
+											expense.conversionRate
+												? Number(expense.conversionRate)
+												: null,
+										)}
 									</TableCell>
 									<TableCell>
-										{format(
-											new Date(expense.date),
-											"MMM dd, yyyy",
+										{expense.salaryMonth ? (
+											(() => {
+												const [year, month] =
+													expense.salaryMonth.split(
+														"-",
+													);
+												const date = new Date(
+													Number(year),
+													Number(month) - 1,
+												);
+												return format(date, "MMMM yyyy");
+											})()
+										) : (
+											format(
+												new Date(expense.date),
+												"MMM dd, yyyy",
+											)
 										)}
 									</TableCell>
 									<TableCell>

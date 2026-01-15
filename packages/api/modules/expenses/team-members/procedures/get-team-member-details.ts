@@ -28,29 +28,41 @@ export const getTeamMemberDetailsProcedure = protectedProcedure
 		const teamMember = await getTeamMemberById(id);
 
 		if (!teamMember) {
-			throw new ORPCError("NOT_FOUND", "Team member not found");
+			throw new ORPCError("NOT_FOUND", {
+				message: "Team member not found",
+			});
+		}
+
+		if (!teamMember.expenseAccount) {
+			throw new ORPCError("BAD_REQUEST", {
+				message: "Team member not associated with an expense account",
+			});
 		}
 
 		const membership = await verifyOrganizationMembership(
-			teamMember.business.organizationId,
+			teamMember.expenseAccount.organizationId,
 			user.id,
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", {
+				message: "Not a member of this workspace",
+			});
 		}
 
 		// Get loans for this team member
-		const loans = await getLoansByBusinessId(
-			teamMember.businessId,
-			undefined,
-			id,
-		);
+		// Note: teamMember.businessId is deprecated, use expenseAccount relation instead
+		const expenseAccountId = teamMember.expenseAccount?.id;
+		const loans = expenseAccountId
+			? await getLoansByBusinessId(expenseAccountId, undefined, id)
+			: [];
 
 		// Get expenses related to this team member
-		const expenses = await getExpensesByBusinessId(teamMember.businessId, {
-			teamMemberId: id,
-		});
+		const expenses = expenseAccountId
+			? await getExpensesByBusinessId(expenseAccountId, {
+					teamMemberId: id,
+				})
+			: [];
 
 		return {
 			...teamMember,

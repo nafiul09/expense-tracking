@@ -15,7 +15,9 @@ export const listSubscriptionsProcedure = protectedProcedure
 	.input(
 		z.object({
 			businessId: z.string(),
-			status: z.enum(["active", "cancelled", "paused"]).optional(),
+			status: z
+				.enum(["active", "inactive", "cancelled", "paused"])
+				.optional(),
 		}),
 	)
 	.handler(async ({ context: { user }, input }) => {
@@ -24,7 +26,7 @@ export const listSubscriptionsProcedure = protectedProcedure
 		const business = await getBusinessById(businessId);
 
 		if (!business) {
-			throw new ORPCError("BAD_REQUEST", "Business not found");
+			throw new ORPCError("BAD_REQUEST", { message: "Business not found" });
 		}
 
 		const membership = await verifyOrganizationMembership(
@@ -33,7 +35,7 @@ export const listSubscriptionsProcedure = protectedProcedure
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", { message: "Not a member of this workspace" });
 		}
 
 		const subscriptions = await getSubscriptionsByBusinessId(

@@ -25,7 +25,7 @@ export const updateExpenseProcedure = protectedProcedure
 			date: z.coerce.date().optional(),
 			receiptUrl: z.string().url().optional().nullable(),
 			status: z.string().optional(),
-			metadata: z.record(z.any()).optional(),
+			metadata: z.record(z.string(), z.any()).optional(),
 		}),
 	)
 	.handler(async ({ context: { user }, input }) => {
@@ -34,30 +34,37 @@ export const updateExpenseProcedure = protectedProcedure
 		const expense = await getExpenseById(id);
 
 		if (!expense) {
-			throw new ORPCError("NOT_FOUND", "Expense not found");
+			throw new ORPCError("NOT_FOUND", { message: "Expense not found" });
 		}
 
 		const membership = await verifyOrganizationMembership(
-			expense.business.organizationId,
+			expense.expenseAccount.organizationId,
 			user.id,
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", {
+				message: "Not a member of this workspace",
+			});
 		}
 
 		// Only owners and admins can update expenses
 		if (membership.role !== "owner" && membership.role !== "admin") {
-			throw new ORPCError(
-				"FORBIDDEN",
-				"Only owners and admins can update expenses",
-			);
+			throw new ORPCError("FORBIDDEN", {
+				message: "Only owners and admins can update expenses",
+			});
 		}
 
-		const updatedExpense = await updateExpense({
+		// Convert metadata to Prisma-compatible format if present
+		const updatePayload: any = {
 			id,
 			...updateData,
-		});
+		};
+		if (updatePayload.metadata !== undefined) {
+			updatePayload.metadata = updatePayload.metadata as any;
+		}
+
+		const updatedExpense = await updateExpense(updatePayload);
 
 		return updatedExpense;
 	});

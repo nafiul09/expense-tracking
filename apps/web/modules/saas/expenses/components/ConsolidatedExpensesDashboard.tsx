@@ -1,7 +1,7 @@
 "use client";
 
 import { config } from "@repo/config";
-import { formatCurrency } from "@repo/utils";
+import { formatAmountWithOriginal, formatCurrency } from "@repo/utils";
 import { expensesApi } from "@saas/expenses/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@ui/components/badge";
@@ -412,10 +412,25 @@ export default function ConsolidatedExpensesDashboard({
 							expensesData.expenses.map((expense) => (
 								<TableRow key={expense.id}>
 									<TableCell>
-										{format(
-											new Date(expense.date),
-											"MMM dd, yyyy",
-										)}
+										{expense.salaryMonth
+											? (() => {
+													const [year, month] =
+														expense.salaryMonth.split(
+															"-",
+														);
+													const date = new Date(
+														Number(year),
+														Number(month) - 1,
+													);
+													return format(
+														date,
+														"MMMM yyyy",
+													);
+												})()
+											: format(
+													new Date(expense.date),
+													"MMM dd, yyyy",
+												)}
 									</TableCell>
 									<TableCell className="font-medium">
 										{expense.title}
@@ -426,22 +441,23 @@ export default function ConsolidatedExpensesDashboard({
 										</Badge>
 									</TableCell>
 									<TableCell>
-										{formatCurrency(
+										{formatAmountWithOriginal(
 											Number(expense.amount),
 											expense.currency ||
 												expense.expenseAccount
 													?.currency ||
-												config.expenses
-													.defaultBaseCurrency,
-											currencyRates?.find(
-												(r) =>
-													r.toCurrency ===
-													(expense.currency ||
-														expense.expenseAccount
-															?.currency ||
-														config.expenses
-															.defaultBaseCurrency),
-											),
+												"USD",
+											expense.expenseAccount?.currency ||
+												"USD",
+											currencyRates || [],
+											expense.baseCurrencyAmount
+												? Number(
+														expense.baseCurrencyAmount,
+													)
+												: null,
+											expense.conversionRate
+												? Number(expense.conversionRate)
+												: null,
 										)}
 									</TableCell>
 									<TableCell>

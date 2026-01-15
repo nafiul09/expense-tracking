@@ -23,7 +23,7 @@ export const getExpenseAccountDetailsProcedure = protectedProcedure
 		const expenseAccount = await getExpenseAccountById(id);
 
 		if (!expenseAccount) {
-			throw new ORPCError("NOT_FOUND", "Expense account not found");
+			throw new ORPCError("NOT_FOUND", { message: "Expense account not found" });
 		}
 
 		const membership = await verifyOrganizationMembership(
@@ -32,7 +32,7 @@ export const getExpenseAccountDetailsProcedure = protectedProcedure
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", "Not a member of this workspace");
+			throw new ORPCError("FORBIDDEN", { message: "Not a member of this workspace" });
 		}
 
 		return expenseAccount;

@@ -71,7 +71,7 @@ export function CreateBusinessDialog({
 	];
 
 	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema),
+		resolver: zodResolver(formSchema) as any,
 		defaultValues: {
 			name: "",
 			description: "",
@@ -103,7 +103,9 @@ export function CreateBusinessDialog({
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>{t("expenses.expenseAccounts.create")}</DialogTitle>
+					<DialogTitle>
+						{t("expenses.expenseAccounts.create")}
+					</DialogTitle>
 					<DialogDescription>
 						{t("expenses.expenseAccounts.createDescription")}
 					</DialogDescription>
@@ -136,7 +138,9 @@ export function CreateBusinessDialog({
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										{t("expenses.expenseAccounts.description")}
+										{t(
+											"expenses.expenseAccounts.description",
+										)}
 									</FormLabel>
 									<FormControl>
 										<Textarea {...field} />
@@ -188,7 +192,9 @@ export function CreateBusinessDialog({
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>
-											{t("expenses.expenseAccounts.currency")}
+											{t(
+												"expenses.expenseAccounts.currency",
+											)}
 										</FormLabel>
 										<Select
 											onValueChange={field.onChange}
