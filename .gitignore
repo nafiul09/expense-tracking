@@ -43,3 +43,6 @@ dist/
 .react-email/
 .content-collections/
 .prisma-zod-generator-manifest.json
+
+# Auto Claude data directory
+.auto-claude/
