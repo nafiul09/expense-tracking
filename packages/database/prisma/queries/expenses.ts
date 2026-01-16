@@ -71,7 +71,6 @@ export async function getExpensesByBusinessId(
 export async function getAllExpensesByOrganizationId(
 	organizationId: string,
 	options?: {
-		categoryIds?: string[];
 		accountIds?: string[];
 		expenseType?: string;
 		teamMemberId?: string;
@@ -88,10 +87,6 @@ export async function getAllExpensesByOrganizationId(
 			organizationId,
 		},
 	};
-
-	if (options?.categoryIds && options.categoryIds.length > 0) {
-		where.categoryId = { in: options.categoryIds };
-	}
 
 	if (options?.accountIds && options.accountIds.length > 0) {
 		where.businessId = { in: options.accountIds };

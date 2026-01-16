@@ -888,6 +888,7 @@
 		"table": {
 			"title": "Titel",
 			"category": "Kategorie",
+			"expenseType": "Ausgabenart",
 			"amount": "Betrag",
 			"date": "Datum",
 			"actions": "Aktionen"

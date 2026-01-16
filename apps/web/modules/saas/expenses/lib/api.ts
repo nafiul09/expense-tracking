@@ -104,6 +104,7 @@ export const expensesApi = {
 		list: async (data: {
 			businessId: string;
 			categoryId?: string;
+			expenseType?: "subscription" | "team_salary" | "one_time";
 			teamMemberId?: string;
 			startDate?: Date;
 			endDate?: Date;
@@ -114,7 +115,6 @@ export const expensesApi = {
 		},
 		listAll: async (data: {
 			organizationId: string;
-			categoryIds?: string[];
 			accountIds?: string[];
 			teamMemberId?: string;
 			startDate?: Date;

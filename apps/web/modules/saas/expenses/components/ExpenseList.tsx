@@ -70,7 +70,7 @@ export function ExpenseList({ businessId, showAllTypes }: ExpenseListProps) {
 						<TableRow>
 							<TableHead>{t("expenses.table.title")}</TableHead>
 							<TableHead>
-								{t("expenses.table.category")}
+								{t("expenses.table.expenseType") || "Expense Type"}
 							</TableHead>
 							<TableHead>{t("expenses.table.amount")}</TableHead>
 							<TableHead>{t("expenses.table.date")}</TableHead>

@@ -1169,6 +1169,7 @@
 		"table": {
 			"title": "Title",
 			"category": "Category",
+			"expenseType": "Expense Type",
 			"amount": "Amount",
 			"date": "Date",
 			"actions": "Actions",
@@ -1446,7 +1447,6 @@
 		"filters": {
 			"startDate": "Start Date",
 			"endDate": "End Date",
-			"categories": "Categories",
 			"expenseAccounts": "Expense Accounts",
 			"status": "Status",
 			"statusAll": "All",

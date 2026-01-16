@@ -39,31 +39,14 @@ export function OneTimeExpenseList({ businessId }: OneTimeExpenseListProps) {
 		queryFn: () => expensesApi.businesses.getDetails(businessId),
 	});
 
-	const { data: categories } = useQuery({
-		queryKey: ["categories", business?.organizationId],
-		queryFn: () =>
-			business
-				? expensesApi.categories.list(business.organizationId)
-				: Promise.resolve([]),
-		enabled: !!business,
-	});
-
-	// Find one-time category ID
-	const oneTimeCategory = categories?.find(
-		(cat) =>
-			cat.name.toLowerCase().includes("one-time") ||
-			cat.name.toLowerCase().includes("one time"),
-	);
-
 	const { data: expenses, isLoading } = useQuery({
 		queryKey: ["expenses", businessId, "one-time"],
 		queryFn: () =>
 			expensesApi.expenses.list({
 				businessId,
-				categoryId: oneTimeCategory?.id,
+				expenseType: "one_time",
 				limit: 50,
 			}),
-		enabled: !!oneTimeCategory,
 	});
 
 	const { data: currencyRates } = useQuery({
@@ -79,16 +62,6 @@ export function OneTimeExpenseList({ businessId }: OneTimeExpenseListProps) {
 		return <div>{t("common.loading")}</div>;
 	}
 
-	if (!oneTimeCategory) {
-		return (
-			<Card className="p-8 text-center">
-				<p className="text-muted-foreground">
-					{t("expenses.oneTime.empty")}
-				</p>
-			</Card>
-		);
-	}
-
 	return (
 		<div className="space-y-4">
 			<Card>
@@ -97,7 +70,7 @@ export function OneTimeExpenseList({ businessId }: OneTimeExpenseListProps) {
 						<TableRow>
 							<TableHead>{t("expenses.table.title")}</TableHead>
 							<TableHead>
-								{t("expenses.table.category")}
+								{t("expenses.table.expenseType") || "Expense Type"}
 							</TableHead>
 							<TableHead>{t("expenses.table.amount")}</TableHead>
 							<TableHead>{t("expenses.table.date")}</TableHead>
@@ -113,8 +86,8 @@ export function OneTimeExpenseList({ businessId }: OneTimeExpenseListProps) {
 									</TableCell>
 									<TableCell>
 										<Badge variant="outline">
-											{expense.category?.name ||
-												"Uncategorized"}
+											{t("expenses.expenseType.oneTime") ||
+												"One-Time"}
 										</Badge>
 									</TableCell>
 									<TableCell>

@@ -15,7 +15,6 @@ export const listAllExpensesProcedure = protectedProcedure
 	.input(
 		z.object({
 			organizationId: z.string(),
-			categoryIds: z.array(z.string()).optional(),
 			accountIds: z.array(z.string()).optional(),
 			teamMemberId: z.string().optional(),
 			startDate: z.coerce.date().optional(),

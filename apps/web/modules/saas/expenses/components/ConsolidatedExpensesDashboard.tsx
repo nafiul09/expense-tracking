@@ -48,7 +48,6 @@ export default function ConsolidatedExpensesDashboard({
 	const [filters, setFilters] = useState({
 		startDate: subDays(new Date(), 30) as Date | undefined,
 		endDate: new Date() as Date | undefined,
-		categoryIds: [] as string[],
 		accountIds: [] as string[],
 		status: undefined as string | undefined,
 		search: "",
@@ -81,12 +80,6 @@ export default function ConsolidatedExpensesDashboard({
 	const { data: expenseAccounts } = useQuery({
 		queryKey: ["expenseAccounts", organizationId],
 		queryFn: () => expensesApi.expenseAccounts.list(organizationId),
-	});
-
-	// Fetch categories for filter
-	const { data: categories } = useQuery({
-		queryKey: ["categories", organizationId],
-		queryFn: () => expensesApi.categories.list(organizationId),
 	});
 
 	// Fetch currency rates
@@ -133,16 +126,6 @@ export default function ConsolidatedExpensesDashboard({
 			totalCount: expensesData.total,
 		};
 	}, [expensesData]);
-
-	const handleCategoryToggle = (categoryId: string) => {
-		setFilters((prev) => ({
-			...prev,
-			categoryIds: prev.categoryIds.includes(categoryId)
-				? prev.categoryIds.filter((id) => id !== categoryId)
-				: [...prev.categoryIds, categoryId],
-		}));
-		setPage(0);
-	};
 
 	const handleAccountToggle = (accountId: string) => {
 		setFilters((prev) => ({
@@ -332,33 +315,8 @@ export default function ConsolidatedExpensesDashboard({
 					</div>
 				</div>
 
-				{/* Category and Account Filters */}
-				<div className="mt-4 grid gap-4 md:grid-cols-2">
-					<div className="space-y-2">
-						<div className="text-sm font-medium">
-							{t("expenses.filters.categories")}
-						</div>
-						<div className="flex flex-wrap gap-2">
-							{categories?.map((category) => (
-								<Badge
-									key={category.id}
-									variant={
-										filters.categoryIds.includes(
-											category.id,
-										)
-											? "default"
-											: "outline"
-									}
-									className="cursor-pointer"
-									onClick={() =>
-										handleCategoryToggle(category.id)
-									}
-								>
-									{category.name}
-								</Badge>
-							))}
-						</div>
-					</div>
+				{/* Account Filters */}
+				<div className="mt-4">
 					<div className="space-y-2">
 						<div className="text-sm font-medium">
 							{t("expenses.filters.expenseAccounts")}
@@ -392,9 +350,6 @@ export default function ConsolidatedExpensesDashboard({
 						<TableRow>
 							<TableHead>{t("expenses.table.date")}</TableHead>
 							<TableHead>{t("expenses.table.title")}</TableHead>
-							<TableHead>
-								{t("expenses.table.category")}
-							</TableHead>
 							<TableHead>{t("expenses.table.amount")}</TableHead>
 							<TableHead>
 								{t("expenses.consolidated.expenseAccount")}
@@ -434,12 +389,6 @@ export default function ConsolidatedExpensesDashboard({
 									</TableCell>
 									<TableCell className="font-medium">
 										{expense.title}
-									</TableCell>
-									<TableCell>
-										<Badge variant="outline">
-											{expense.category?.name ||
-												"Uncategorized"}
-										</Badge>
 									</TableCell>
 									<TableCell>
 										{formatAmountWithOriginal(
@@ -518,7 +467,7 @@ export default function ConsolidatedExpensesDashboard({
 						) : (
 							<TableRow>
 								<TableCell
-									colSpan={8}
+									colSpan={7}
 									className="text-center py-8 text-muted-foreground"
 								>
 									{t("expenses.empty")}
