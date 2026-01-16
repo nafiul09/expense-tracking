@@ -2,7 +2,17 @@
 
 import { formatAmountWithOriginal, formatCurrency } from "@repo/utils";
 import { expensesApi } from "@saas/expenses/lib/api";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@ui/components/alert-dialog";
 import { Badge } from "@ui/components/badge";
 import { Button } from "@ui/components/button";
 import { Card } from "@ui/components/card";
@@ -22,24 +32,28 @@ import {
 	TableRow,
 } from "@ui/components/table";
 import { format } from "date-fns";
-import { MoreVerticalIcon } from "lucide-react";
+import { MoreVerticalIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { toast } from "sonner";
 import { RecordLoanPaymentDialog } from "./RecordLoanPaymentDialog";
+import { ViewLoanPaymentHistoryDialog } from "./ViewLoanPaymentHistoryDialog";
 
 interface LoanListProps {
 	businessId: string;
 	onLoanSelect?: (loanId: string | null) => void;
 }
 
-export function LoanList({
-	businessId,
-	onLoanSelect,
-}: LoanListProps) {
+export function LoanList({ businessId, onLoanSelect }: LoanListProps) {
 	const t = useTranslations();
+	const queryClient = useQueryClient();
 	const [paymentDialogLoanId, setPaymentDialogLoanId] = useState<
 		string | null
 	>(null);
+	const [historyDialogLoanId, setHistoryDialogLoanId] = useState<
+		string | null
+	>(null);
+	const [deletingLoanId, setDeletingLoanId] = useState<string | null>(null);
 
 	const { data: business } = useQuery({
 		queryKey: ["business", businessId],
@@ -47,15 +61,11 @@ export function LoanList({
 	});
 
 	const { data: loans, isLoading } = useQuery({
-		queryKey: ["standalone-loans", businessId],
+		queryKey: ["loans", businessId],
 		queryFn: () =>
-			business
-				? expensesApi.loans.listStandalone({
-						organizationId: business.organizationId,
-						accountIds: [businessId],
-					})
-				: Promise.resolve([]),
-		enabled: !!business,
+			expensesApi.loans.list({
+				businessId,
+			}),
 	});
 
 	const { data: currencyRates } = useQuery({
@@ -66,6 +76,24 @@ export function LoanList({
 				: Promise.resolve([]),
 		enabled: !!business,
 	});
+
+	const handleDelete = async (loanId: string) => {
+		try {
+			await expensesApi.loans.delete(loanId);
+			toast.success(
+				t("expenses.loans.messages.deleted") ||
+					"Loan deleted successfully",
+			);
+			queryClient.invalidateQueries({ queryKey: ["loans", businessId] });
+			setDeletingLoanId(null);
+		} catch (error) {
+			toast.error(
+				t("expenses.loans.messages.deleteError") ||
+					"Failed to delete loan",
+			);
+			console.error(error);
+		}
+	};
 
 	if (isLoading) {
 		return <div>{t("common.loading")}</div>;
@@ -78,7 +106,10 @@ export function LoanList({
 					<TableHeader>
 						<TableRow>
 							<TableHead>
-								{t("expenses.loans.table.teamMember")}
+								{t("expenses.loans.table.loanType") || "Type"}
+							</TableHead>
+							<TableHead>
+								{t("expenses.loans.table.partyName") || "Party"}
 							</TableHead>
 							<TableHead>
 								{t("expenses.loans.table.loanDate")}
@@ -108,21 +139,30 @@ export function LoanList({
 									principal > 0
 										? (paid / principal) * 100
 										: 0;
-								const accountCurrency = business?.currency || "USD";
-								
-								// Calculate original amount from baseCurrencyAmount and conversionRate
-								// conversionRate is FROM original currency TO USD
-								// So: baseCurrencyAmount = originalAmount / conversionRate
-								// Therefore: originalAmount = baseCurrencyAmount * conversionRate
-								let originalPrincipal: number | null = null;
-								if (loan.baseCurrencyAmount && loan.conversionRate) {
-									originalPrincipal = Number(loan.baseCurrencyAmount) * Number(loan.conversionRate);
-								}
+								const accountCurrency =
+									business?.currency || "USD";
 
 								return (
 									<TableRow key={loan.id}>
+										<TableCell>
+											<Badge
+												variant={
+													loan.loanType === "given"
+														? "default"
+														: "secondary"
+												}
+											>
+												{loan.loanType === "given"
+													? t(
+															"loans.form.loanGiven",
+														) || "Given"
+													: t(
+															"loans.form.loanTaken",
+														) || "Taken"}
+											</Badge>
+										</TableCell>
 										<TableCell className="font-medium">
-											{loan.teamMember.name}
+											{loan.partyName}
 										</TableCell>
 										<TableCell>
 											{format(
@@ -131,17 +171,21 @@ export function LoanList({
 											)}
 										</TableCell>
 										<TableCell>
-											{originalPrincipal != null && loan.currency !== accountCurrency
+											{loan.currency !==
+												accountCurrency &&
+											loan.baseCurrencyAmount != null
 												? formatAmountWithOriginal(
-														originalPrincipal,
+														principal,
 														loan.currency || "USD",
 														accountCurrency,
 														currencyRates || [],
-														loan.baseCurrencyAmount
-															? Number(loan.baseCurrencyAmount)
-															: null,
+														Number(
+															loan.baseCurrencyAmount,
+														),
 														loan.conversionRate
-															? Number(loan.conversionRate)
+															? Number(
+																	loan.conversionRate,
+																)
 															: null,
 													)
 												: formatCurrency(
@@ -155,21 +199,29 @@ export function LoanList({
 													)}
 										</TableCell>
 										<TableCell>
-											{originalPrincipal != null && loan.currency !== accountCurrency
+											{loan.currency !==
+												accountCurrency &&
+											loan.baseCurrencyAmount != null
 												? (() => {
-														// Calculate remaining in original currency proportionally
-														const remainingRatio = remaining / principal;
-														const originalRemaining = originalPrincipal * remainingRatio;
+														// Calculate remaining proportionally
+														const remainingRatio =
+															remaining /
+															principal;
+														const remainingInUSD =
+															Number(
+																loan.baseCurrencyAmount,
+															) * remainingRatio;
 														return formatAmountWithOriginal(
-															originalRemaining,
-															loan.currency || "USD",
+															remaining,
+															loan.currency ||
+																"USD",
 															accountCurrency,
 															currencyRates || [],
-															loan.baseCurrencyAmount
-																? Number(loan.baseCurrencyAmount) * remainingRatio
-																: null,
+															remainingInUSD,
 															loan.conversionRate
-																? Number(loan.conversionRate)
+																? Number(
+																		loan.conversionRate,
+																	)
 																: null,
 														);
 													})()
@@ -199,26 +251,16 @@ export function LoanList({
 												variant={
 													loan.status === "paid"
 														? "default"
-														: loan.status ===
-																"active"
-															? "secondary"
-															: "outline"
+														: "secondary"
 												}
 											>
 												{loan.status === "paid"
 													? t(
 															"expenses.loans.status.paid",
 														)
-													: loan.status === "active"
-														? t(
-																"expenses.loans.status.active",
-															)
-														: loan.status ===
-																"cancelled"
-															? t(
-																	"expenses.loans.status.cancelled",
-																)
-															: loan.status}
+													: t(
+															"expenses.loans.status.active",
+														)}
 											</Badge>
 										</TableCell>
 										<TableCell>
@@ -232,6 +274,15 @@ export function LoanList({
 													</Button>
 												</DropdownMenuTrigger>
 												<DropdownMenuContent align="end">
+													<DropdownMenuItem
+														onClick={() =>
+															setHistoryDialogLoanId(
+																loan.id,
+															)
+														}
+													>
+														{t("loans.viewHistory")}
+													</DropdownMenuItem>
 													{loan.status === "active" &&
 														remaining > 0 && (
 															<DropdownMenuItem
@@ -239,7 +290,9 @@ export function LoanList({
 																	setPaymentDialogLoanId(
 																		loan.id,
 																	);
-																	onLoanSelect?.(loan.id);
+																	onLoanSelect?.(
+																		loan.id,
+																	);
 																}}
 															>
 																{t(
@@ -247,8 +300,16 @@ export function LoanList({
 																)}
 															</DropdownMenuItem>
 														)}
-													<DropdownMenuItem>
-														{t("loans.viewHistory")}
+													<DropdownMenuItem
+														className="text-destructive"
+														onClick={() =>
+															setDeletingLoanId(
+																loan.id,
+															)
+														}
+													>
+														<TrashIcon className="size-4 mr-2" />
+														{t("common.delete")}
 													</DropdownMenuItem>
 												</DropdownMenuContent>
 											</DropdownMenu>
@@ -280,6 +341,71 @@ export function LoanList({
 					businessId={businessId}
 				/>
 			)}
+
+			{historyDialogLoanId && (
+				<ViewLoanPaymentHistoryDialog
+					open={!!historyDialogLoanId}
+					onOpenChange={(open) =>
+						!open && setHistoryDialogLoanId(null)
+					}
+					loanId={historyDialogLoanId}
+					businessId={businessId}
+				/>
+			)}
+
+			<AlertDialog
+				open={!!deletingLoanId}
+				onOpenChange={(open) => !open && setDeletingLoanId(null)}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>
+							{t("expenses.loans.deleteTitle") || "Delete Loan"}
+						</AlertDialogTitle>
+						<AlertDialogDescription>
+							{t("expenses.loans.deleteWarning") ||
+								"Are you sure you want to permanently delete this loan?"}
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<div className="space-y-4">
+						<div className="bg-muted rounded-md p-4 space-y-2 text-sm">
+							<p className="font-medium">
+								{t("expenses.loans.deleteNote") ||
+									"What happens when you delete:"}
+							</p>
+							<ul className="list-disc list-inside space-y-1 text-muted-foreground">
+								<li>
+									{t("expenses.loans.deletePoint1") ||
+										"The loan record will be permanently removed"}
+								</li>
+								<li>
+									{t("expenses.loans.deletePoint2") ||
+										"Payment history will be deleted"}
+								</li>
+								<li>
+									{t("expenses.loans.deletePoint3") ||
+										"This action cannot be undone"}
+								</li>
+							</ul>
+						</div>
+					</div>
+					<AlertDialogFooter>
+						<AlertDialogCancel>
+							{t("common.cancel")}
+						</AlertDialogCancel>
+						<AlertDialogAction
+							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+							onClick={() => {
+								if (deletingLoanId) {
+									handleDelete(deletingLoanId);
+								}
+							}}
+						>
+							{t("common.delete")}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 }

@@ -40,19 +40,28 @@ export default function ConsolidatedLoansDashboard({
 	const t = useTranslations();
 	const [filters, setFilters] = useState({
 		accountIds: [] as string[],
-		teamMemberIds: [] as string[],
+		loanType: undefined as "given" | "taken" | undefined,
 		status: undefined as string | undefined,
-		loanDateStart: undefined as Date | undefined,
-		loanDateEnd: undefined as Date | undefined,
+		partyName: undefined as string | undefined,
+		startDate: undefined as Date | undefined,
+		endDate: undefined as Date | undefined,
 	});
 	const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
 	const { data: loans, isLoading } = useQuery({
-		queryKey: ["all-standalone-loans", organizationId, filters],
+		queryKey: ["all-loans", organizationId, filters],
 		queryFn: () =>
-			expensesApi.loans.listStandalone({
+			expensesApi.loans.listAll({
 				organizationId,
-				...filters,
+				accountIds:
+					filters.accountIds.length > 0
+						? filters.accountIds
+						: undefined,
+				loanType: filters.loanType,
+				status: filters.status,
+				partyName: filters.partyName,
+				startDate: filters.startDate,
+				endDate: filters.endDate,
 			}),
 	});
 
@@ -66,18 +75,18 @@ export default function ConsolidatedLoansDashboard({
 		queryFn: () => expensesApi.currencies.list(organizationId),
 	});
 
-	// Get unique team members from loans for filter
-	const teamMembers = useMemo(() => {
+	// Get unique parties from loans for filter
+	const parties = useMemo(() => {
 		if (!loans) {
 			return [];
 		}
-		const memberMap = new Map();
+		const partySet = new Set<string>();
 		loans.forEach((loan) => {
-			if (loan.teamMember && !memberMap.has(loan.teamMember.id)) {
-				memberMap.set(loan.teamMember.id, loan.teamMember);
+			if (loan.partyName) {
+				partySet.add(loan.partyName);
 			}
 		});
-		return Array.from(memberMap.values());
+		return Array.from(partySet).sort();
 	}, [loans]);
 
 	const summaryStats = useMemo(() => {
@@ -118,12 +127,10 @@ export default function ConsolidatedLoansDashboard({
 		}));
 	};
 
-	const handleTeamMemberToggle = (teamMemberId: string) => {
+	const handleLoanTypeChange = (loanType: "given" | "taken" | "all") => {
 		setFilters((prev) => ({
 			...prev,
-			teamMemberIds: prev.teamMemberIds.includes(teamMemberId)
-				? prev.teamMemberIds.filter((id) => id !== teamMemberId)
-				: [...prev.teamMemberIds, teamMemberId],
+			loanType: loanType === "all" ? undefined : loanType,
 		}));
 	};
 
@@ -232,22 +239,20 @@ export default function ConsolidatedLoansDashboard({
 
 					<div className="space-y-2">
 						<div className="text-sm font-medium">
-							{t("expenses.loans.filters.loanDateStart")}
+							{t("expenses.loans.filters.startDate") ||
+								"Start Date"}
 						</div>
 						<Input
 							type="date"
 							value={
-								filters.loanDateStart
-									? format(
-											filters.loanDateStart,
-											"yyyy-MM-dd",
-										)
+								filters.startDate
+									? format(filters.startDate, "yyyy-MM-dd")
 									: ""
 							}
 							onChange={(e) => {
 								setFilters((prev) => ({
 									...prev,
-									loanDateStart: e.target.value
+									startDate: e.target.value
 										? new Date(e.target.value)
 										: undefined,
 								}));
@@ -257,19 +262,19 @@ export default function ConsolidatedLoansDashboard({
 
 					<div className="space-y-2">
 						<div className="text-sm font-medium">
-							{t("expenses.loans.filters.loanDateEnd")}
+							{t("expenses.loans.filters.endDate") || "End Date"}
 						</div>
 						<Input
 							type="date"
 							value={
-								filters.loanDateEnd
-									? format(filters.loanDateEnd, "yyyy-MM-dd")
+								filters.endDate
+									? format(filters.endDate, "yyyy-MM-dd")
 									: ""
 							}
 							onChange={(e) => {
 								setFilters((prev) => ({
 									...prev,
-									loanDateEnd: e.target.value
+									endDate: e.target.value
 										? new Date(e.target.value)
 										: undefined,
 								}));
@@ -315,28 +320,52 @@ export default function ConsolidatedLoansDashboard({
 					</div>
 					<div className="space-y-2">
 						<div className="text-sm font-medium">
-							{t("expenses.loans.filters.teamMembers")}
+							{t("expenses.loans.filters.loanType") ||
+								"Loan Type"}
 						</div>
-						<div className="flex flex-wrap gap-2">
-							{teamMembers.map((member) => (
-								<Badge
-									key={member.id}
-									variant={
-										filters.teamMemberIds.includes(
-											member.id,
-										)
-											? "default"
-											: "outline"
-									}
-									className="cursor-pointer"
-									onClick={() =>
-										handleTeamMemberToggle(member.id)
-									}
-								>
-									{member.name}
-								</Badge>
-							))}
+						<Select
+							value={filters.loanType || "all"}
+							onValueChange={(value) =>
+								handleLoanTypeChange(
+									value as "given" | "taken" | "all",
+								)
+							}
+						>
+							<SelectTrigger>
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="all">
+									{t("expenses.loans.filters.allTypes") ||
+										"All Types"}
+								</SelectItem>
+								<SelectItem value="given">
+									{t("loans.form.loanGiven") || "Given"}
+								</SelectItem>
+								<SelectItem value="taken">
+									{t("loans.form.loanTaken") || "Taken"}
+								</SelectItem>
+							</SelectContent>
+						</Select>
+					</div>
+					<div className="space-y-2">
+						<div className="text-sm font-medium">
+							{t("expenses.loans.filters.partyName") ||
+								"Party Name"}
 						</div>
+						<Input
+							placeholder={
+								t("expenses.loans.filters.searchParty") ||
+								"Search party..."
+							}
+							value={filters.partyName || ""}
+							onChange={(e) => {
+								setFilters((prev) => ({
+									...prev,
+									partyName: e.target.value || undefined,
+								}));
+							}}
+						/>
 					</div>
 				</div>
 			</Card>
@@ -347,7 +376,10 @@ export default function ConsolidatedLoansDashboard({
 					<TableHeader>
 						<TableRow>
 							<TableHead>
-								{t("expenses.loans.table.teamMember")}
+								{t("expenses.loans.table.loanType") || "Type"}
+							</TableHead>
+							<TableHead>
+								{t("expenses.loans.table.partyName") || "Party"}
 							</TableHead>
 							<TableHead>
 								{t("expenses.loans.table.loanDate")}
@@ -400,8 +432,25 @@ export default function ConsolidatedLoansDashboard({
 
 								return (
 									<TableRow key={loan.id}>
+										<TableCell>
+											<Badge
+												variant={
+													loan.loanType === "given"
+														? "default"
+														: "secondary"
+												}
+											>
+												{loan.loanType === "given"
+													? t(
+															"loans.form.loanGiven",
+														) || "Given"
+													: t(
+															"loans.form.loanTaken",
+														) || "Taken"}
+											</Badge>
+										</TableCell>
 										<TableCell className="font-medium">
-											{loan.teamMember?.name || "-"}
+											{loan.partyName}
 										</TableCell>
 										<TableCell>
 											{format(

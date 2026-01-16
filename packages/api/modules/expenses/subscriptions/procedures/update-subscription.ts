@@ -4,6 +4,7 @@ import { addDays } from "date-fns";
 import z from "zod";
 import { protectedProcedure } from "../../../../orpc/procedures";
 import { verifyOrganizationMembership } from "../../../organizations/lib/membership";
+import { fetchFavicon } from "../../lib/fetch-favicon";
 
 export const updateSubscriptionProcedure = protectedProcedure
 	.route({
@@ -18,9 +19,12 @@ export const updateSubscriptionProcedure = protectedProcedure
 			id: z.string(),
 			title: z.string().min(1).optional(),
 			description: z.string().optional(),
-			provider: z.string().optional(),
-			currentAmount: z.number().positive().optional(),
+			websiteUrl: z.string().url().optional().or(z.literal("")),
+			websiteIcon: z.string().url().optional().or(z.literal("")),
+			amount: z.number().positive().optional(), // Renamed from currentAmount
 			currency: z.string().optional(),
+			rateType: z.enum(["default", "custom"]).optional(),
+			customRate: z.number().positive().optional(),
 			renewalDate: z.coerce
 				.date()
 				.refine(
@@ -39,12 +43,9 @@ export const updateSubscriptionProcedure = protectedProcedure
 			renewalFrequency: z
 				.enum(["monthly", "yearly", "weekly"])
 				.optional(),
-			renewalType: z
-				.enum(["from_payment_date", "from_renewal_date"])
-				.optional(),
-			autoRenew: z.boolean().optional(),
 			reminderDays: z.number().int().min(1).max(30).optional(),
-			status: z.enum(["active", "inactive"]).optional(),
+			paymentMethodId: z.string().optional(),
+			status: z.enum(["active", "inactive", "cancelled"]).optional(),
 		}),
 	)
 	.handler(async ({ context: { user }, input }) => {
@@ -91,6 +92,71 @@ export const updateSubscriptionProcedure = protectedProcedure
 			}
 		}
 
+		// Fetch favicon if website URL is provided and changed
+		let websiteIcon: string | undefined | null;
+		if (updateData.websiteUrl !== undefined) {
+			if (updateData.websiteUrl) {
+				websiteIcon = await fetchFavicon(updateData.websiteUrl);
+			} else {
+				websiteIcon = null;
+			}
+		}
+
+		// If custom websiteIcon is provided, override the fetched one
+		if (updateData.websiteIcon !== undefined) {
+			if (updateData.websiteIcon) {
+				websiteIcon = updateData.websiteIcon;
+			} else if (updateData.websiteIcon === "") {
+				websiteIcon = null;
+			}
+		}
+
+		// Handle currency conversion if amount or currency changed
+		let conversionRate: number | undefined;
+		let baseCurrencyAmount: number | undefined;
+		const rateType =
+			updateData.rateType || subscription.rateType || "default";
+
+		if (
+			(updateData.amount !== undefined ||
+				updateData.currency !== undefined) &&
+			subscription.expenseAccount
+		) {
+			const { config } = await import("@repo/config");
+			const { getCurrencyRatesByOrganization } = await import(
+				"@repo/database"
+			);
+			const baseCurrency = config.expenses.defaultBaseCurrency;
+			const expenseCurrency =
+				updateData.currency || subscription.currency || baseCurrency;
+
+			if (expenseCurrency !== baseCurrency) {
+				if (rateType === "custom" && updateData.customRate) {
+					conversionRate = updateData.customRate;
+				} else {
+					const currencyRates = await getCurrencyRatesByOrganization(
+						subscription.expenseAccount.organizationId,
+					);
+					const rate = currencyRates.find(
+						(r) => r.toCurrency === expenseCurrency,
+					);
+
+					if (rate) {
+						conversionRate = Number(rate.rate);
+					}
+				}
+
+				if (conversionRate) {
+					const amount =
+						updateData.amount ?? Number(subscription.amount);
+					baseCurrencyAmount = amount / conversionRate;
+				}
+			} else {
+				baseCurrencyAmount =
+					updateData.amount ?? Number(subscription.amount);
+			}
+		}
+
 		// Calculate next reminder date if renewalDate or reminderDays changed
 		let nextReminderDate: Date | undefined;
 		if (updateData.renewalDate || updateData.reminderDays !== undefined) {
@@ -101,10 +167,22 @@ export const updateSubscriptionProcedure = protectedProcedure
 			nextReminderDate = addDays(renewalDate, -reminderDays);
 		}
 
+		// Prepare update data
+		const finalUpdateData: any = {
+			...updateData,
+			...(websiteIcon !== undefined && { websiteIcon }),
+			...(conversionRate !== undefined && { conversionRate }),
+			...(rateType && { rateType }),
+			...(baseCurrencyAmount !== undefined && { baseCurrencyAmount }),
+			...(nextReminderDate && { nextReminderDate }),
+		};
+
+		// Remove customRate from update data (it's only used for calculation)
+		delete finalUpdateData.customRate;
+
 		const updatedSubscription = await updateSubscription({
 			id,
-			...updateData,
-			...(nextReminderDate && { nextReminderDate }),
+			...finalUpdateData,
 		});
 
 		return updatedSubscription;

@@ -9,17 +9,20 @@ export const listAllLoansProcedure = protectedProcedure
 		method: "GET",
 		path: "/expenses/loans/all",
 		tags: ["Expenses"],
-		summary: "List all loans across all expense accounts",
-		description: "List loans across all expense accounts for an organization with optional filters",
+		summary: "List all loans",
+		description: "List all loans across all expense accounts in an organization",
 	})
 	.input(
 		z.object({
 			organizationId: z.string(),
 			accountIds: z.array(z.string()).optional(),
-			teamMemberIds: z.array(z.string()).optional(),
-			status: z.enum(["active", "paid", "partial"]).optional(),
-			loanDateStart: z.coerce.date().optional(),
-			loanDateEnd: z.coerce.date().optional(),
+			loanType: z.enum(["given", "taken"]).optional(),
+			status: z.string().optional(),
+			partyName: z.string().optional(),
+			startDate: z.coerce.date().optional(),
+			endDate: z.coerce.date().optional(),
+			limit: z.number().int().positive().max(100).default(50),
+			offset: z.number().int().nonnegative().default(0),
 		}),
 	)
 	.handler(async ({ context: { user }, input }) => {
@@ -31,7 +34,9 @@ export const listAllLoansProcedure = protectedProcedure
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", { message: "Not a member of this workspace" });
+			throw new ORPCError("FORBIDDEN", {
+				message: "Not a member of this workspace",
+			});
 		}
 
 		const loans = await getAllLoansByOrganizationId(organizationId, options);

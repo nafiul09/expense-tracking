@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import {
-	getStandaloneLoanById,
-	recordStandaloneLoanPayment,
+	getLoanById,
+	addLoanPayment,
 } from "@repo/database";
 import z from "zod";
 import { protectedProcedure } from "../../../../orpc/procedures";
@@ -22,7 +22,7 @@ export const recordStandaloneLoanPaymentProcedure = protectedProcedure
 			currency: z.string().min(1),
 			conversionRate: z.number().positive().optional(), // Custom rate from payment currency to USD (if provided)
 			paymentDate: z.coerce.date(),
-			paymentType: z.enum(["payment", "disbursement"]).optional(),
+			paymentType: z.enum(["principal", "interest", "both"]).optional(),
 			notes: z.string().optional(),
 		}),
 	)
@@ -37,7 +37,7 @@ export const recordStandaloneLoanPaymentProcedure = protectedProcedure
 			notes,
 		} = input;
 
-		const loan = await getStandaloneLoanById(id);
+		const loan = await getLoanById(id);
 
 		if (!loan) {
 			throw new ORPCError("NOT_FOUND", { message: "Loan not found" });
@@ -116,13 +116,13 @@ export const recordStandaloneLoanPaymentProcedure = protectedProcedure
 			});
 		}
 
-		const payment = await recordStandaloneLoanPayment({
+		const payment = await addLoanPayment({
 			loanId: id,
 			amount: finalPaymentAmount, // Store converted amount in account currency
 			currency, // Original payment currency (for reference)
 			conversionRate: paymentConversionRate, // Rate from payment currency to USD
 			paymentDate,
-			paymentType: paymentType || "payment",
+			paymentType: paymentType || "principal",
 			notes,
 			recordedBy: user.id,
 		});

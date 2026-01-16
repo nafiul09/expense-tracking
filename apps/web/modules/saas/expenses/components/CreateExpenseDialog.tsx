@@ -40,7 +40,9 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 const formSchema = z.object({
-	categoryId: z.string().min(1),
+	expenseType: z
+		.enum(["subscription", "team_salary", "one_time"])
+		.default("one_time"),
 	title: z.string().min(1).max(255).optional(),
 	description: z.string().optional(),
 	amount: z.number().positive(),
@@ -82,15 +84,6 @@ export function CreateExpenseDialog({
 		queryFn: () => expensesApi.businesses.getDetails(businessId),
 	});
 
-	const { data: categories } = useQuery({
-		queryKey: ["categories", business?.organizationId],
-		queryFn: () =>
-			business
-				? expensesApi.categories.list(business.organizationId)
-				: Promise.resolve([]),
-		enabled: !!business,
-	});
-
 	const { data: paymentMethods } = useQuery({
 		queryKey: ["paymentMethods", business?.organizationId],
 		queryFn: () =>
@@ -117,7 +110,7 @@ export function CreateExpenseDialog({
 	const form = useForm<FormValues>({
 		resolver: zodResolver(formSchema) as any,
 		defaultValues: {
-			categoryId: "",
+			expenseType: "one_time",
 			title: "",
 			description: "",
 			amount: 0,
@@ -138,7 +131,7 @@ export function CreateExpenseDialog({
 	useEffect(() => {
 		if (open) {
 			form.reset({
-				categoryId: "",
+				expenseType: "one_time",
 				title: "",
 				description: "",
 				amount: 0,
@@ -153,10 +146,6 @@ export function CreateExpenseDialog({
 				salaryType: undefined,
 				salaryMonth: undefined,
 			});
-			// Clear any old subscription-related fields that no longer exist in schema
-			form.setValue("renewalFrequency" as any, undefined);
-			form.setValue("renewalDate" as any, undefined);
-			form.setValue("provider" as any, undefined);
 		}
 	}, [open, business?.currency, form]);
 
@@ -170,24 +159,11 @@ export function CreateExpenseDialog({
 		}
 	}, [business?.currency, form]);
 
-	// Watch category to determine which fields to show
-	const selectedCategoryId = form.watch("categoryId");
-	const selectedCategory = categories?.find(
-		(c) => c.id === selectedCategoryId,
-	);
-	const categoryName = selectedCategory?.name.toLowerCase() || "";
-
-	const isSubscription =
-		categoryName.includes("subscription") ||
-		categoryName === "subscription";
-	const isTeamSalary =
-		categoryName.includes("team salary") ||
-		categoryName.includes("salary") ||
-		categoryName === "team salary";
-	const isOneTime =
-		categoryName.includes("one-time") ||
-		categoryName.includes("one time") ||
-		categoryName === "one-time";
+	// Watch expenseType to determine which fields to show
+	const expenseType = form.watch("expenseType");
+	const isSubscription = expenseType === "subscription";
+	const isTeamSalary = expenseType === "team_salary";
+	const isOneTime = expenseType === "one_time";
 
 	// Fetch subscriptions when category is Subscription
 	const { data: subscriptions } = useQuery({
@@ -210,10 +186,7 @@ export function CreateExpenseDialog({
 			selectedSubscription &&
 			amountType === "default"
 		) {
-			form.setValue(
-				"amount",
-				Number(selectedSubscription.currentAmount || 0),
-			);
+			form.setValue("amount", Number(selectedSubscription.amount || 0));
 			if (!form.getValues("title")) {
 				form.setValue("title", selectedSubscription.title);
 			}
@@ -312,11 +285,32 @@ export function CreateExpenseDialog({
 
 	const onSubmit = async (values: FormValues) => {
 		try {
-			// Prepare data based on category type
+			// Auto-generate title for team salary based on selected member
+			let generatedTitle = values.title || "Expense";
+			if (
+				isTeamSalary &&
+				values.teamMemberId &&
+				values.teamMemberId !== "__none__"
+			) {
+				const selectedMember = teamMembers?.find(
+					(m) => m.id === values.teamMemberId,
+				);
+				if (selectedMember) {
+					generatedTitle = `${selectedMember.name} - Salary Payment`;
+				}
+			}
+
+			// Auto-set date for team salary from salaryMonth
+			let expenseDate = values.date;
+			if (isTeamSalary && values.salaryMonth) {
+				expenseDate = new Date(values.salaryMonth + "-01");
+			}
+
+			// Prepare data based on expense type
 			const expenseData: any = {
 				businessId,
-				categoryId: values.categoryId,
-				title: values.title || `${selectedCategory?.name} Expense`,
+				expenseType: values.expenseType,
+				title: generatedTitle,
 				description: values.description,
 				amount: values.amount,
 				currency: values.currency,
@@ -325,7 +319,7 @@ export function CreateExpenseDialog({
 					values.rateType === "custom"
 						? values.customRate
 						: undefined,
-				date: values.date,
+				date: expenseDate,
 				paymentMethodId:
 					values.paymentMethodId &&
 					values.paymentMethodId !== "__none__"
@@ -342,18 +336,10 @@ export function CreateExpenseDialog({
 				expenseData.teamMemberId = values.teamMemberId;
 				expenseData.salaryType = values.salaryType;
 				expenseData.salaryMonth = values.salaryMonth;
-				// For team salary, set date to first day of the selected month
-				if (values.salaryMonth) {
-					expenseData.date = new Date(values.salaryMonth + "-01");
-				}
 			}
 
 			if (isSubscription && values.subscriptionId) {
 				expenseData.subscriptionId = values.subscriptionId;
-				// If custom amount, allow updating subscription amount
-				if (values.amountType === "custom") {
-					expenseData.updateSubscriptionAmount = true;
-				}
 			}
 
 			await expensesApi.expenses.create(expenseData);
@@ -388,20 +374,20 @@ export function CreateExpenseDialog({
 						onSubmit={form.handleSubmit(onSubmit)}
 						className="space-y-4"
 					>
-						{/* Category Selection - Must be first */}
+						{/* Expense Type Selection - Must be first */}
 						<FormField
 							control={form.control}
-							name="categoryId"
+							name="expenseType"
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										{t("expenses.form.categoryType") ||
-											t("expenses.form.category")}
+										{t("expenses.form.expenseType") ||
+											"Expense Type"}
 									</FormLabel>
 									<Select
 										onValueChange={(value) => {
 											field.onChange(value);
-											// Reset conditional fields when category changes
+											// Reset conditional fields when expense type changes
 											form.setValue(
 												"teamMemberId",
 												"__none__",
@@ -414,28 +400,53 @@ export function CreateExpenseDialog({
 												"salaryMonth",
 												undefined,
 											);
+											form.setValue(
+												"subscriptionId",
+												undefined,
+											);
 											form.setValue("amount", 0);
+											form.setValue("title", "");
+
+											// For team salary, set default date and salaryMonth
+											if (value === "team_salary") {
+												const currentMonth = new Date()
+													.toISOString()
+													.slice(0, 7);
+												form.setValue(
+													"salaryMonth",
+													currentMonth,
+												);
+												form.setValue(
+													"date",
+													new Date(
+														currentMonth + "-01",
+													),
+												);
+											}
 										}}
 										defaultValue={field.value}
 									>
 										<FormControl>
 											<SelectTrigger>
-												<SelectValue
-													placeholder={t(
-														"expenses.form.selectCategory",
-													)}
-												/>
+												<SelectValue />
 											</SelectTrigger>
 										</FormControl>
 										<SelectContent>
-											{categories?.map((category) => (
-												<SelectItem
-													key={category.id}
-													value={category.id}
-												>
-													{category.name}
-												</SelectItem>
-											))}
+											<SelectItem value="subscription">
+												{t(
+													"expenses.expenseType.subscription",
+												) || "Subscription"}
+											</SelectItem>
+											<SelectItem value="team_salary">
+												{t(
+													"expenses.expenseType.teamSalary",
+												) || "Team Salary"}
+											</SelectItem>
+											<SelectItem value="one_time">
+												{t(
+													"expenses.expenseType.oneTime",
+												) || "One Time"}
+											</SelectItem>
 										</SelectContent>
 									</Select>
 									<FormMessage />
@@ -475,6 +486,20 @@ export function CreateExpenseDialog({
 										<Select
 											onValueChange={(value) => {
 												field.onChange(value);
+												// Auto-generate title when team member is selected
+												if (value !== "__none__") {
+													const member =
+														teamMembers?.find(
+															(m) =>
+																m.id === value,
+														);
+													if (member) {
+														form.setValue(
+															"title",
+															`${member.name} - Salary Payment`,
+														);
+													}
+												}
 												// Auto-fill amount if default salary type
 												if (
 													value !== "__none__" &&
@@ -687,7 +712,7 @@ export function CreateExpenseDialog({
 														form.setValue(
 															"amount",
 															Number(
-																subscription.currentAmount ||
+																subscription.amount ||
 																	0,
 															),
 														);
@@ -802,7 +827,7 @@ export function CreateExpenseDialog({
 																(
 																{formatAmountWithOriginal(
 																	Number(
-																		selectedSubscription.currentAmount ||
+																		selectedSubscription.amount ||
 																			0,
 																	),
 																	selectedSubscription.currency ||
@@ -947,11 +972,21 @@ export function CreateExpenseDialog({
 														.toISOString()
 														.slice(0, 7)
 												}
-												onChange={(e) =>
+												onChange={(e) => {
 													field.onChange(
 														e.target.value,
-													)
-												}
+													);
+													// Auto-set date to 1st of selected month
+													if (e.target.value) {
+														form.setValue(
+															"date",
+															new Date(
+																e.target.value +
+																	"-01",
+															),
+														);
+													}
+												}}
 											/>
 										</FormControl>
 										<FormMessage />

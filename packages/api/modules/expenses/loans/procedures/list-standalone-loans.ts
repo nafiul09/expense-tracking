@@ -1,4 +1,4 @@
-import { getAllStandaloneLoansByOrganizationId } from "@repo/database";
+import { getAllLoansByOrganizationId } from "@repo/database";
 import z from "zod";
 import { protectedProcedure } from "../../../../orpc/procedures";
 import { verifyOrganizationMembership } from "../../../organizations/lib/membership";
@@ -31,14 +31,14 @@ export const listStandaloneLoansProcedure = protectedProcedure
 			throw new Error("Not a member of this workspace");
 		}
 
-		const loans = await getAllStandaloneLoansByOrganizationId(
+		const loans = await getAllLoansByOrganizationId(
 			input.organizationId,
 			{
 				accountIds: input.accountIds,
-				teamMemberIds: input.teamMemberIds,
+				loanType: "team_member", // Filter for team member loans (standalone loans)
 				status: input.status,
-				loanDateStart: input.loanDateStart,
-				loanDateEnd: input.loanDateEnd,
+				startDate: input.loanDateStart,
+				endDate: input.loanDateEnd,
 			},
 		);
 

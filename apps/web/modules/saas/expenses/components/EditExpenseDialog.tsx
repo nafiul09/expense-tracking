@@ -128,7 +128,7 @@ export function EditExpenseDialog({
 				amount: Number(expense.amount),
 				currency: expense.currency,
 				date: new Date(expense.date),
-				categoryId: expense.categoryId,
+				categoryId: expense.categoryId || undefined,
 				teamMemberId: expense.teamMemberId || "__none__",
 				paymentMethodId: expense.paymentMethodId || "__none__",
 			});

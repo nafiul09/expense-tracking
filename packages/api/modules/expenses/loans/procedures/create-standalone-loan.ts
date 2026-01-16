@@ -1,6 +1,6 @@
 import { ORPCError } from "@orpc/server";
 import {
-	createStandaloneLoan,
+	createLoan,
 	getExpenseAccountById,
 	getTeamMemberById,
 } from "@repo/database";
@@ -136,9 +136,11 @@ export const createStandaloneLoanProcedure = protectedProcedure
 		// Store amounts: principalAmount and currentBalance in account currency for balance consistency
 		// currency stores the original input currency for reference
 		// baseCurrencyAmount stores the amount in USD (intermediate conversion step)
-		const loan = await createStandaloneLoan({
-			teamMemberId,
-			businessId,
+		const loan = await createLoan({
+			expenseAccountId: businessId,
+			loanType: "team_member",
+			partyName: teamMember.name,
+			partyContact: teamMember.email || undefined,
 			principalAmount: finalAmount, // Store in account currency for balance tracking
 			currentBalance: finalAmount, // Store in account currency for balance tracking
 			currency, // Original input currency (for reference)

@@ -7,7 +7,7 @@ import { verifyOrganizationMembership } from "../../../organizations/lib/members
 export const getLoanHistoryProcedure = protectedProcedure
 	.route({
 		method: "GET",
-		path: "/expenses/loans/:id",
+		path: "/expenses/loans/:id/history",
 		tags: ["Expenses"],
 		summary: "Get loan history",
 		description: "Get detailed loan information including payment history",
@@ -27,7 +27,7 @@ export const getLoanHistoryProcedure = protectedProcedure
 		}
 
 		const membership = await verifyOrganizationMembership(
-			loan.expense.expenseAccount.organizationId,
+			loan.expenseAccount.organizationId,
 			user.id,
 		);
 

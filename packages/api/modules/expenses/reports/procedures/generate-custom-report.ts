@@ -105,22 +105,22 @@ export const generateCustomReportProcedure = protectedProcedure
 			},
 		);
 
-		// Filter by category name if reportType is specified
-		let filteredExpenses = expenses;
-		if (reportType !== "all_categories") {
-			const categoryNameMap: Record<string, string> = {
-				subscription: "Subscription",
-				team_salary: "Team Salary",
-				one_time: "One-time",
-				team_member_loan: "Team Member Loan",
-			};
-			const categoryName = categoryNameMap[reportType];
-			if (categoryName) {
-				filteredExpenses = expenses.filter(
-					(e) => e.category.name === categoryName,
-				);
-			}
+	// Filter by category name if reportType is specified
+	let filteredExpenses = expenses;
+	if (reportType !== "all_categories") {
+		const categoryNameMap: Record<string, string> = {
+			subscription: "Subscription",
+			team_salary: "Team Salary",
+			one_time: "One-time",
+			team_member_loan: "Team Member Loan",
+		};
+		const categoryName = categoryNameMap[reportType];
+		if (categoryName) {
+			filteredExpenses = expenses.filter(
+				(e) => e.category?.name === categoryName,
+			);
 		}
+	}
 
 		// Calculate totals and breakdowns
 		let totalExpenses = 0;
@@ -142,12 +142,12 @@ export const generateCustomReportProcedure = protectedProcedure
 				currencyRates,
 			);
 
-			totalExpenses += convertedAmount;
+		totalExpenses += convertedAmount;
 
-			// Category breakdown
-			const categoryName = expense.category.name;
-			categoryBreakdown[categoryName] =
-				(categoryBreakdown[categoryName] || 0) + convertedAmount;
+		// Category breakdown
+		const categoryName = expense.category?.name || "Uncategorized";
+		categoryBreakdown[categoryName] =
+			(categoryBreakdown[categoryName] || 0) + convertedAmount;
 
 			// Account breakdown
 			const accountName = expense.expenseAccount?.name || "Unknown";
@@ -155,27 +155,27 @@ export const generateCustomReportProcedure = protectedProcedure
 				(accountBreakdown[accountName] || 0) + convertedAmount;
 		}
 
-		// Prepare report data
-		const reportData = {
-			expenses: includeDetails
-				? filteredExpenses.map((e) => ({
-						id: e.id,
-						title: e.title,
-						description: e.description,
-						amount: Number(e.amount),
-						currency: e.currency || e.expenseAccount?.currency,
-						date: e.date,
-						category: e.category.name,
-						account: e.expenseAccount?.name,
-						teamMember: e.teamMember?.name,
-					}))
-				: [],
-			categoryBreakdown,
-			accountBreakdown,
-			totalExpenses,
-			reportCurrency,
-			reportType,
-		};
+	// Prepare report data
+	const reportData = {
+		expenses: includeDetails
+			? filteredExpenses.map((e) => ({
+					id: e.id,
+					title: e.title,
+					description: e.description,
+					amount: Number(e.amount),
+					currency: e.currency || e.expenseAccount?.currency,
+					date: e.date,
+					category: e.category?.name || "Uncategorized",
+					account: e.expenseAccount?.name,
+					teamMember: e.teamMember?.name,
+				}))
+			: [],
+		categoryBreakdown,
+		accountBreakdown,
+		totalExpenses,
+		reportCurrency,
+		reportType,
+	};
 
 		// Create report record
 		const report = await createExpenseReport({

@@ -437,7 +437,8 @@ export default function ConsolidatedExpensesDashboard({
 									</TableCell>
 									<TableCell>
 										<Badge variant="outline">
-											{expense.category.name}
+											{expense.category?.name ||
+												"Uncategorized"}
 										</Badge>
 									</TableCell>
 									<TableCell>

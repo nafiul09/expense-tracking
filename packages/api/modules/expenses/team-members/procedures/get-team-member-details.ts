@@ -1,9 +1,5 @@
 import { ORPCError } from "@orpc/server";
-import {
-	getExpensesByBusinessId,
-	getLoansByBusinessId,
-	getTeamMemberById,
-} from "@repo/database";
+import { getExpensesByBusinessId, getTeamMemberById } from "@repo/database";
 import z from "zod";
 import { protectedProcedure } from "../../../../orpc/procedures";
 import { verifyOrganizationMembership } from "../../../organizations/lib/membership";
@@ -15,7 +11,7 @@ export const getTeamMemberDetailsProcedure = protectedProcedure
 		tags: ["Expenses"],
 		summary: "Get team member details",
 		description:
-			"Get detailed information about a team member including salary history and loans",
+			"Get detailed information about a team member including salary payment history",
 	})
 	.input(
 		z.object({
@@ -50,14 +46,8 @@ export const getTeamMemberDetailsProcedure = protectedProcedure
 			});
 		}
 
-		// Get loans for this team member
-		// Note: teamMember.businessId is deprecated, use expenseAccount relation instead
+		// Get salary expenses for this team member
 		const expenseAccountId = teamMember.expenseAccount?.id;
-		const loans = expenseAccountId
-			? await getLoansByBusinessId(expenseAccountId, undefined, id)
-			: [];
-
-		// Get expenses related to this team member
 		const expenses = expenseAccountId
 			? await getExpensesByBusinessId(expenseAccountId, {
 					teamMemberId: id,
@@ -66,7 +56,6 @@ export const getTeamMemberDetailsProcedure = protectedProcedure
 
 		return {
 			...teamMember,
-			loans,
 			expenses,
 		};
 	});

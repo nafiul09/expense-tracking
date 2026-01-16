@@ -81,7 +81,9 @@ export async function getCategoryBreakdown(
 	});
 
 	// Fetch category names
-	const categoryIds = breakdown.map((b) => b.categoryId);
+	const categoryIds = breakdown
+		.map((b) => b.categoryId)
+		.filter((id): id is string => id !== null);
 	const categories = await db.expenseCategory.findMany({
 		where: {
 			id: { in: categoryIds },
@@ -92,7 +94,7 @@ export async function getCategoryBreakdown(
 
 	return breakdown.map((b) => ({
 		categoryId: b.categoryId,
-		categoryName: categoryMap.get(b.categoryId) || "Unknown",
+		categoryName: b.categoryId ? categoryMap.get(b.categoryId) || "Unknown" : "Uncategorized",
 		totalAmount: b._sum.amount || 0,
 		count: b._count.id,
 	}));

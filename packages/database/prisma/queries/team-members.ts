@@ -1,5 +1,5 @@
-import type { TeamMemberUpdateInput } from "../generated/models/TeamMember";
 import { db } from "../client";
+import type { TeamMemberUpdateInput } from "../generated/models/TeamMember";
 
 export async function getTeamMemberById(id: string) {
 	return db.teamMember.findUnique({
@@ -20,7 +20,6 @@ export async function getTeamMemberById(id: string) {
 			_count: {
 				select: {
 					expenses: true,
-					loans: true,
 				},
 			},
 		},
@@ -47,10 +46,19 @@ export async function getTeamMembersByBusinessId(businessId: string) {
 					},
 				},
 			},
+			expenses: {
+				where: {
+					expenseType: "team_salary",
+				},
+				select: {
+					id: true,
+					amount: true,
+					date: true,
+				},
+			},
 			_count: {
 				select: {
 					expenses: true,
-					loans: true,
 				},
 			},
 		},
@@ -123,7 +131,6 @@ export async function getAllTeamMembersByOrganizationId(
 			_count: {
 				select: {
 					expenses: true,
-					loans: true,
 				},
 			},
 		},

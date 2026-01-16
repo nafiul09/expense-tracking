@@ -1,16 +1,16 @@
 import { ORPCError } from "@orpc/server";
-import { getLoanById, updateLoan } from "@repo/database";
+import { deleteLoan, getLoanById } from "@repo/database";
 import z from "zod";
 import { protectedProcedure } from "../../../../orpc/procedures";
 import { verifyOrganizationMembership } from "../../../organizations/lib/membership";
 
-export const cancelStandaloneLoanProcedure = protectedProcedure
+export const deleteLoanProcedure = protectedProcedure
 	.route({
-		method: "POST",
-		path: "/expenses/loans/standalone/:id/cancel",
+		method: "DELETE",
+		path: "/expenses/loans/:id",
 		tags: ["Expenses"],
-		summary: "Cancel standalone loan",
-		description: "Cancel a standalone loan (sets status to cancelled)",
+		summary: "Delete a loan",
+		description: "Permanently delete a loan record",
 	})
 	.input(
 		z.object({
@@ -21,7 +21,9 @@ export const cancelStandaloneLoanProcedure = protectedProcedure
 		const loan = await getLoanById(input.id);
 
 		if (!loan) {
-			throw new ORPCError("NOT_FOUND", { message: "Loan not found" });
+			throw new ORPCError("NOT_FOUND", {
+				message: "Loan not found",
+			});
 		}
 
 		const membership = await verifyOrganizationMembership(
@@ -35,17 +37,14 @@ export const cancelStandaloneLoanProcedure = protectedProcedure
 			});
 		}
 
-		// Only owners and admins can cancel loans
+		// Only owners and admins can delete loans
 		if (membership.role !== "owner" && membership.role !== "admin") {
 			throw new ORPCError("FORBIDDEN", {
-				message: "Only owners and admins can cancel loans",
+				message: "Only owners and admins can delete loans",
 			});
 		}
 
-		const cancelledLoan = await updateLoan({
-			id: input.id,
-			status: "cancelled",
-		});
+		const deletedLoan = await deleteLoan(input.id);
 
-		return cancelledLoan;
+		return deletedLoan;
 	});

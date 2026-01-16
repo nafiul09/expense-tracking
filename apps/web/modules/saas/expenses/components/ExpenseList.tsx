@@ -28,10 +28,6 @@ interface ExpenseListProps {
 
 export function ExpenseList({ businessId, showAllTypes }: ExpenseListProps) {
 	const t = useTranslations();
-	const [filters, setFilters] = useState({
-		startDate: undefined as Date | undefined,
-		endDate: undefined as Date | undefined,
-	});
 	const [editingExpenseId, setEditingExpenseId] = useState<string | null>(
 		null,
 	);
@@ -40,11 +36,10 @@ export function ExpenseList({ businessId, showAllTypes }: ExpenseListProps) {
 	);
 
 	const { data: expenses, isLoading } = useQuery({
-		queryKey: ["expenses", businessId, filters, showAllTypes],
+		queryKey: ["expenses", businessId, showAllTypes],
 		queryFn: () =>
 			expensesApi.expenses.list({
 				businessId,
-				...filters,
 				limit: 50,
 			}),
 	});
@@ -87,21 +82,57 @@ export function ExpenseList({ businessId, showAllTypes }: ExpenseListProps) {
 							expenses.map((expense) => (
 								<TableRow key={expense.id}>
 									<TableCell className="font-medium">
-										{expense.title}
+										<div>
+											<div className="font-medium">
+												{expense.title}
+											</div>
+											{expense.description && (
+												<div className="text-xs text-muted-foreground mt-1">
+													{expense.description}
+												</div>
+											)}
+											{expense.teamMember && (
+												<div className="text-xs text-muted-foreground mt-1">
+													Team Member:{" "}
+													{expense.teamMember.name}
+												</div>
+											)}
+										</div>
 									</TableCell>
 									<TableCell>
 										<Badge variant="outline">
-											{expense.category.name}
+											{expense.expenseType ===
+												"subscription" &&
+												(t(
+													"expenses.expenseType.subscription",
+												) ||
+													"Subscription")}
+											{expense.expenseType ===
+												"team_salary" &&
+												(t(
+													"expenses.expenseType.teamSalary",
+												) ||
+													"Team Salary")}
+											{expense.expenseType ===
+												"one_time" &&
+												(t(
+													"expenses.expenseType.oneTime",
+												) ||
+													"One-Time")}
 										</Badge>
 									</TableCell>
 									<TableCell>
 										{formatAmountWithOriginal(
 											Number(expense.amount),
-											expense.currency || business?.currency || "USD",
+											expense.currency ||
+												business?.currency ||
+												"USD",
 											business?.currency || "USD",
 											currencyRates || [],
 											expense.baseCurrencyAmount
-												? Number(expense.baseCurrencyAmount)
+												? Number(
+														expense.baseCurrencyAmount,
+													)
 												: null,
 											expense.conversionRate
 												? Number(expense.conversionRate)
@@ -109,24 +140,25 @@ export function ExpenseList({ businessId, showAllTypes }: ExpenseListProps) {
 										)}
 									</TableCell>
 									<TableCell>
-										{expense.salaryMonth ? (
-											(() => {
-												const [year, month] =
-													expense.salaryMonth.split(
-														"-",
+										{expense.salaryMonth
+											? (() => {
+													const [year, month] =
+														expense.salaryMonth.split(
+															"-",
+														);
+													const date = new Date(
+														Number(year),
+														Number(month) - 1,
 													);
-												const date = new Date(
-													Number(year),
-													Number(month) - 1,
-												);
-												return format(date, "MMMM yyyy");
-											})()
-										) : (
-											format(
-												new Date(expense.date),
-												"MMM dd, yyyy",
-											)
-										)}
+													return format(
+														date,
+														"MMMM yyyy",
+													);
+												})()
+											: format(
+													new Date(expense.date),
+													"MMM dd, yyyy",
+												)}
 									</TableCell>
 									<TableCell>
 										<div className="flex gap-2">

@@ -21,8 +21,6 @@ import {
 	FormMessage,
 } from "@ui/components/form";
 import { Input } from "@ui/components/input";
-import { Label } from "@ui/components/label";
-import { RadioGroup, RadioGroupItem } from "@ui/components/radio-group";
 import {
 	Select,
 	SelectContent,
@@ -32,6 +30,7 @@ import {
 } from "@ui/components/select";
 import { Textarea } from "@ui/components/textarea";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -40,8 +39,9 @@ import { z } from "zod";
 const formSchema = z.object({
 	title: z.string().min(1).max(255),
 	description: z.string().optional(),
-	provider: z.string().optional(),
-	currentAmount: z.number().positive(),
+	websiteUrl: z.string().url().optional().or(z.literal("")),
+	customIconUrl: z.string().url().optional().or(z.literal("")),
+	amount: z.number().positive(),
 	currency: z.string().min(1),
 	renewalDate: z.coerce.date().refine(
 		(date) => {
@@ -58,12 +58,10 @@ const formSchema = z.object({
 	renewalFrequency: z
 		.enum(["monthly", "yearly", "weekly"])
 		.default("monthly"),
-	renewalType: z
-		.enum(["from_payment_date", "from_renewal_date"])
-		.default("from_payment_date"),
-	autoRenew: z.boolean().default(true),
 	reminderDays: z.number().int().min(1).max(30).default(7),
-	status: z.enum(["active", "inactive"]).default("active"),
+	status: z.enum(["active", "inactive", "cancelled"]).default("active"),
+	rateType: z.enum(["default", "custom"]).optional(),
+	customRate: z.number().positive().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -119,13 +117,12 @@ export function EditSubscriptionDialog({
 		defaultValues: {
 			title: "",
 			description: "",
-			provider: "",
-			currentAmount: 0,
+			websiteUrl: "",
+			customIconUrl: "",
+			amount: 0,
 			currency: "USD",
 			renewalDate: new Date(),
 			renewalFrequency: "monthly",
-			renewalType: "from_payment_date",
-			autoRenew: true,
 			reminderDays: 7,
 			status: "active",
 		},
@@ -136,8 +133,9 @@ export function EditSubscriptionDialog({
 			form.reset({
 				title: subscription.title,
 				description: subscription.description || "",
-				provider: subscription.provider || "",
-				currentAmount: Number(subscription.currentAmount || 0),
+				websiteUrl: subscription.websiteUrl || "",
+				customIconUrl: "",
+				amount: Number(subscription.amount || 0),
 				currency: subscription.currency || business?.currency || "USD",
 				renewalDate: new Date(subscription.renewalDate),
 				renewalFrequency:
@@ -145,24 +143,32 @@ export function EditSubscriptionDialog({
 						| "monthly"
 						| "yearly"
 						| "weekly") || "monthly",
-				renewalType:
-					(subscription.renewalType as
-						| "from_payment_date"
-						| "from_renewal_date") || "from_payment_date",
-				autoRenew: subscription.autoRenew ?? true,
 				reminderDays: subscription.reminderDays || 7,
 				status:
-					(subscription.status as "active" | "inactive") || "active",
+					(subscription.status as
+						| "active"
+						| "inactive"
+						| "cancelled") || "active",
 			});
 		}
 	}, [subscription, business?.currency, form]);
 
 	const onSubmit = async (values: FormValues) => {
 		try {
-			await expensesApi.subscriptions.update({
+			const updateData: any = {
 				id: subscriptionId,
 				...values,
-			});
+			};
+
+			// If custom icon URL is provided, use it as websiteIcon
+			if (values.customIconUrl) {
+				updateData.websiteIcon = values.customIconUrl;
+			}
+
+			// Remove customIconUrl from update data as it's not a field on the subscription
+			delete updateData.customIconUrl;
+
+			await expensesApi.subscriptions.update(updateData);
 
 			toast.success(
 				t("expenses.subscriptions.updated") ||
@@ -246,16 +252,14 @@ export function EditSubscriptionDialog({
 
 						<FormField
 							control={form.control}
-							name="provider"
+							name="websiteUrl"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>
-										{t(
-											"expenses.subscriptions.table.provider",
-										)}
-									</FormLabel>
+									<FormLabel>Website URL</FormLabel>
 									<FormControl>
 										<Input
+											type="url"
+											placeholder="https://example.com"
 											{...field}
 											value={field.value || ""}
 										/>
@@ -265,16 +269,100 @@ export function EditSubscriptionDialog({
 							)}
 						/>
 
+						{/* Website Icon Display and Custom Upload */}
+						<div className="space-y-2">
+							<FormLabel>Website Icon</FormLabel>
+							<div className="flex items-center gap-4">
+								{subscription?.websiteIcon && (
+									<div className="flex items-center gap-2">
+										<Image
+											src={subscription.websiteIcon}
+											alt="Website icon"
+											width={32}
+											height={32}
+											className="rounded border"
+											onError={() => {
+												// Hide on error - handled by Next.js Image
+											}}
+										/>
+										<span className="text-xs text-muted-foreground">
+											Auto-fetched
+										</span>
+									</div>
+								)}
+								<FormField
+									control={form.control}
+									name="customIconUrl"
+									render={({ field }) => (
+										<FormItem className="flex-1">
+											<FormControl>
+												<Input
+													type="url"
+													placeholder="Custom icon URL (optional)"
+													{...field}
+													value={field.value || ""}
+												/>
+											</FormControl>
+											<p className="text-xs text-muted-foreground mt-1">
+												Provide a custom icon URL if the auto-fetch failed
+											</p>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
+						</div>
+
+						{/* Currency Conversion Details */}
+						{subscription?.rateType === "custom" && subscription?.conversionRate && (
+							<div className="bg-muted p-3 rounded-md space-y-1 text-sm">
+								<p className="font-medium">Currency Conversion</p>
+								<div className="space-y-0.5">
+									<p className="text-muted-foreground">
+										Rate Type: <span className="font-medium">Custom</span>
+									</p>
+									<p className="text-muted-foreground">
+										Conversion Rate: <span className="font-medium">{Number(subscription.conversionRate).toFixed(4)}</span>
+									</p>
+									{subscription.baseCurrencyAmount && (
+										<p className="text-muted-foreground">
+											Base Amount: <span className="font-medium">{Number(subscription.baseCurrencyAmount).toFixed(2)} {business?.currency || "USD"}</span>
+										</p>
+									)}
+								</div>
+							</div>
+						)}
+						{subscription?.rateType === "default" && subscription?.currency !== business?.currency && (
+							<div className="bg-muted p-3 rounded-md space-y-1 text-sm">
+								<p className="font-medium">Currency Conversion</p>
+								<div className="space-y-0.5">
+									<p className="text-muted-foreground">
+										Rate Type: <span className="font-medium">Default</span>
+									</p>
+									{subscription.conversionRate && (
+										<p className="text-muted-foreground">
+											Conversion Rate: <span className="font-medium">{Number(subscription.conversionRate).toFixed(4)}</span>
+										</p>
+									)}
+									{subscription.baseCurrencyAmount && (
+										<p className="text-muted-foreground">
+											Base Amount: <span className="font-medium">{Number(subscription.baseCurrencyAmount).toFixed(2)} {business?.currency || "USD"}</span>
+										</p>
+									)}
+								</div>
+							</div>
+						)}
+
 						<div className="grid grid-cols-2 gap-4">
 							<FormField
 								control={form.control}
-								name="currentAmount"
+								name="amount"
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>
 											{t(
-												"expenses.subscriptions.currentAmount",
-											)}
+												"expenses.subscriptions.amount",
+											) || "Amount"}
 										</FormLabel>
 										<FormControl>
 											<Input
@@ -437,51 +525,6 @@ export function EditSubscriptionDialog({
 							/>
 						</div>
 
-						<FormField
-							control={form.control}
-							name="renewalType"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t(
-											"expenses.subscriptions.renewalType.label",
-										) || "Renewal Type"}
-									</FormLabel>
-									<FormControl>
-										<RadioGroup
-											onValueChange={field.onChange}
-											value={field.value}
-											className="flex gap-6"
-										>
-											<div className="flex items-center space-x-2">
-												<RadioGroupItem
-													value="from_payment_date"
-													id="renewal-payment"
-												/>
-												<Label htmlFor="renewal-payment">
-													{t(
-														"expenses.subscriptions.renewalType.fromPaymentDate",
-													) || "From Payment Date"}
-												</Label>
-											</div>
-											<div className="flex items-center space-x-2">
-												<RadioGroupItem
-													value="from_renewal_date"
-													id="renewal-renewal"
-												/>
-												<Label htmlFor="renewal-renewal">
-													{t(
-														"expenses.subscriptions.renewalType.fromRenewalDate",
-													) || "From Renewal Date"}
-												</Label>
-											</div>
-										</RadioGroup>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
 						<div className="grid grid-cols-2 gap-4">
 							<FormField
 								control={form.control}
@@ -546,6 +589,11 @@ export function EditSubscriptionDialog({
 												<SelectItem value="inactive">
 													{t(
 														"expenses.subscriptions.status.inactive",
+													)}
+												</SelectItem>
+												<SelectItem value="cancelled">
+													{t(
+														"expenses.subscriptions.status.cancelled",
 													)}
 												</SelectItem>
 											</SelectContent>

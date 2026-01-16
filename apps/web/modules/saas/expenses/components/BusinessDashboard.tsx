@@ -23,7 +23,6 @@ import { EditBusinessDialog } from "./EditBusinessDialog";
 import { ExpenseList } from "./ExpenseList";
 import { LoanList } from "./LoanList";
 import { OneTimeExpenseList } from "./OneTimeExpenseList";
-import { RecordLoanPaymentDialog } from "./RecordLoanPaymentDialog";
 import { SubscriptionList } from "./SubscriptionList";
 import { TeamMemberList } from "./TeamMemberList";
 
@@ -40,8 +39,6 @@ export default function BusinessDashboard({
 	const [createSubscriptionOpen, setCreateSubscriptionOpen] = useState(false);
 	const [createLoanOpen, setCreateLoanOpen] = useState(false);
 	const [createTeamMemberOpen, setCreateTeamMemberOpen] = useState(false);
-	const [adjustLoanOpen, setAdjustLoanOpen] = useState(false);
-	const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -117,36 +114,10 @@ export default function BusinessDashboard({
 					</TabsList>
 					<div className="flex items-center gap-2">
 						{activeTab === "loans" ? (
-							<>
-								<Button
-									variant="outline"
-									onClick={() => setCreateLoanOpen(true)}
-								>
-									<PlusIcon className="mr-2 size-4" />
-									{t("loans.create")}
-								</Button>
-								<Button
-									onClick={() => {
-										// If no loan selected, open dialog to select one
-										if (!selectedLoanId) {
-											// Show a message or open a selection dialog
-											return;
-										}
-										setAdjustLoanOpen(true);
-									}}
-									disabled={!selectedLoanId}
-									title={
-										!selectedLoanId
-											? t("loans.selectLoanFirst") ||
-												"Select a loan first"
-											: undefined
-									}
-								>
-									<PlusIcon className="mr-2 size-4" />
-									{t("loans.recordPayment") ||
-										"Record Payment"}
-								</Button>
-							</>
+							<Button onClick={() => setCreateLoanOpen(true)}>
+								<PlusIcon className="mr-2 size-4" />
+								{t("loans.create")}
+							</Button>
 						) : activeTab === "team" ? (
 							<Button
 								onClick={() => setCreateTeamMemberOpen(true)}
@@ -188,10 +159,7 @@ export default function BusinessDashboard({
 				</TabsContent>
 
 				<TabsContent value="loans">
-					<LoanList
-						businessId={businessId}
-						onLoanSelect={setSelectedLoanId}
-					/>
+					<LoanList businessId={businessId} />
 				</TabsContent>
 			</Tabs>
 
@@ -218,20 +186,6 @@ export default function BusinessDashboard({
 				onOpenChange={setCreateTeamMemberOpen}
 				businessId={businessId}
 			/>
-
-			{selectedLoanId && (
-				<RecordLoanPaymentDialog
-					open={adjustLoanOpen}
-					onOpenChange={(open) => {
-						setAdjustLoanOpen(open);
-						if (!open) {
-							setSelectedLoanId(null);
-						}
-					}}
-					loanId={selectedLoanId}
-					businessId={businessId}
-				/>
-			)}
 
 			{business && (
 				<>

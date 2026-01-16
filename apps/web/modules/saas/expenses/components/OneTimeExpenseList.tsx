@@ -113,17 +113,22 @@ export function OneTimeExpenseList({ businessId }: OneTimeExpenseListProps) {
 									</TableCell>
 									<TableCell>
 										<Badge variant="outline">
-											{expense.category.name}
+											{expense.category?.name ||
+												"Uncategorized"}
 										</Badge>
 									</TableCell>
 									<TableCell>
 										{formatAmountWithOriginal(
 											Number(expense.amount),
-											expense.currency || business?.currency || "USD",
+											expense.currency ||
+												business?.currency ||
+												"USD",
 											business?.currency || "USD",
 											currencyRates || [],
 											expense.baseCurrencyAmount
-												? Number(expense.baseCurrencyAmount)
+												? Number(
+														expense.baseCurrencyAmount,
+													)
 												: null,
 											expense.conversionRate
 												? Number(expense.conversionRate)
@@ -142,7 +147,9 @@ export function OneTimeExpenseList({ businessId }: OneTimeExpenseListProps) {
 												variant="ghost"
 												size="sm"
 												onClick={() =>
-													setEditingExpenseId(expense.id)
+													setEditingExpenseId(
+														expense.id,
+													)
 												}
 											>
 												<EditIcon className="size-4" />
@@ -151,7 +158,9 @@ export function OneTimeExpenseList({ businessId }: OneTimeExpenseListProps) {
 												variant="ghost"
 												size="sm"
 												onClick={() =>
-													setDeletingExpenseId(expense.id)
+													setDeletingExpenseId(
+														expense.id,
+													)
 												}
 											>
 												<TrashIcon className="size-4" />
@@ -177,9 +186,7 @@ export function OneTimeExpenseList({ businessId }: OneTimeExpenseListProps) {
 			{editingExpenseId && (
 				<EditExpenseDialog
 					open={!!editingExpenseId}
-					onOpenChange={(open) =>
-						!open && setEditingExpenseId(null)
-					}
+					onOpenChange={(open) => !open && setEditingExpenseId(null)}
 					expenseId={editingExpenseId}
 					businessId={businessId}
 				/>
@@ -188,9 +195,7 @@ export function OneTimeExpenseList({ businessId }: OneTimeExpenseListProps) {
 			{deletingExpenseId && (
 				<DeleteExpenseDialog
 					open={!!deletingExpenseId}
-					onOpenChange={(open) =>
-						!open && setDeletingExpenseId(null)
-					}
+					onOpenChange={(open) => !open && setDeletingExpenseId(null)}
 					expenseId={deletingExpenseId}
 					businessId={businessId}
 				/>

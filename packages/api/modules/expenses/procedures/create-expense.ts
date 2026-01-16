@@ -2,13 +2,10 @@ import { ORPCError } from "@orpc/server";
 import { config } from "@repo/config";
 import {
 	createExpense,
-	db,
 	getCurrencyRatesByOrganization,
 	getExpenseAccountById,
-	getExpenseCategoryById,
 	getTeamMemberById,
 } from "@repo/database";
-import { addDays, addMonths, addYears } from "date-fns";
 import z from "zod";
 import { protectedProcedure } from "../../../orpc/procedures";
 import { verifyOrganizationMembership } from "../../organizations/lib/membership";
@@ -26,7 +23,10 @@ export const createExpenseProcedure = protectedProcedure
 		z
 			.object({
 				businessId: z.string(),
-				categoryId: z.string(),
+				categoryId: z.string().optional(),
+				expenseType: z
+					.enum(["subscription", "team_salary", "one_time"])
+					.default("one_time"),
 				title: z.string().min(1).max(255).optional(),
 				description: z.string().optional(),
 				amount: z.number().positive(),
@@ -41,14 +41,8 @@ export const createExpenseProcedure = protectedProcedure
 				receiptUrl: z.string().url().optional(),
 				status: z.string().default("active"),
 				metadata: z.record(z.string(), z.any()).optional(),
-				// Subscription linking
-				subscriptionId: z.string().optional(), // Link expense to existing subscription
-				// Conditional: Subscription fields (for backward compatibility, but prefer subscriptionId)
-				renewalFrequency: z.enum(["monthly", "yearly"]).optional(),
-				renewalDate: z.coerce.date().optional(),
-				provider: z.string().optional(),
-				updateSubscriptionAmount: z.boolean().optional(), // If true, update subscription's currentAmount
-				updateSubscriptionRenewalDate: z.coerce.date().optional(), // Update next renewal date
+				// Subscription linking (for subscription expense type)
+				subscriptionId: z.string().optional(),
 				// Conditional: Team Salary fields
 				teamMemberId: z.string().optional(),
 				salaryType: z.enum(["default", "custom"]).optional(),
@@ -57,8 +51,52 @@ export const createExpenseProcedure = protectedProcedure
 					.regex(/^\d{4}-\d{2}$/)
 					.optional(), // Format: YYYY-MM
 			})
-			.superRefine((_data, _ctx) => {
-				// Validation will happen in handler after fetching category
+			.superRefine((data, ctx) => {
+				// Validate expenseType-specific requirements
+				if (
+					data.expenseType === "subscription" &&
+					!data.subscriptionId
+				) {
+					ctx.addIssue({
+						code: z.ZodIssueCode.custom,
+						message:
+							"subscriptionId is required for subscription expenses",
+						path: ["subscriptionId"],
+					});
+				}
+				if (data.expenseType === "team_salary") {
+					if (!data.teamMemberId) {
+						ctx.addIssue({
+							code: z.ZodIssueCode.custom,
+							message:
+								"teamMemberId is required for team salary expenses",
+							path: ["teamMemberId"],
+						});
+					}
+					if (!data.salaryMonth) {
+						ctx.addIssue({
+							code: z.ZodIssueCode.custom,
+							message:
+								"salaryMonth is required for team salary expenses",
+							path: ["salaryMonth"],
+						});
+					}
+					if (!data.salaryType) {
+						ctx.addIssue({
+							code: z.ZodIssueCode.custom,
+							message:
+								"salaryType is required for team salary expenses",
+							path: ["salaryType"],
+						});
+					}
+				}
+				if (data.expenseType === "one_time" && !data.title) {
+					ctx.addIssue({
+						code: z.ZodIssueCode.custom,
+						message: "title is required for one-time expenses",
+						path: ["title"],
+					});
+				}
 			}),
 	)
 	.handler(async ({ context: { user }, input }) => {
@@ -81,54 +119,43 @@ export const createExpenseProcedure = protectedProcedure
 			});
 		}
 
-		const category = await getExpenseCategoryById(input.categoryId);
-
-		if (!category) {
-			throw new ORPCError("BAD_REQUEST", {
-				message: "Category not found",
-			});
-		}
-
-		if (category.organizationId !== expenseAccount.organizationId) {
-			throw new ORPCError("BAD_REQUEST", {
-				message: "Category does not belong to this workspace",
-			});
-		}
-
-		// Validate conditional fields based on category type
-		const categoryName = category.name.toLowerCase();
-		const isTeamSalary =
-			categoryName.includes("team salary") ||
-			categoryName.includes("salary") ||
-			categoryName === "team salary";
-		const isSubscription =
-			categoryName.includes("subscription") ||
-			categoryName === "subscription";
-
-		// Subscription validation
-		if (isSubscription) {
-			if (!input.renewalFrequency || !input.renewalDate) {
+		// Validate expenseType-specific requirements
+		if (input.expenseType === "subscription") {
+			if (!input.subscriptionId) {
 				throw new ORPCError("BAD_REQUEST", {
 					message:
-						"Renewal frequency and renewal date are required for subscription expenses",
+						"subscriptionId is required for subscription expenses",
 				});
 			}
-			if (!input.title) {
+			// Verify subscription exists and belongs to the same expense account
+			const { getSubscriptionById } = await import("@repo/database");
+			const subscription = await getSubscriptionById(
+				input.subscriptionId,
+			);
+
+			if (!subscription) {
 				throw new ORPCError("BAD_REQUEST", {
-					message: "Title is required for subscription expenses",
+					message: "Subscription not found",
 				});
 			}
-			// Don't allow team member for subscriptions
-			if (input.teamMemberId) {
+
+			if (subscription.expenseAccountId !== input.businessId) {
 				throw new ORPCError("BAD_REQUEST", {
 					message:
-						"Team member cannot be assigned to subscription expenses",
+						"Subscription does not belong to this expense account",
+				});
+			}
+
+			if (subscription.status !== "active") {
+				throw new ORPCError("BAD_REQUEST", {
+					message: "Cannot add expenses to inactive subscription",
 				});
 			}
 		}
 
 		// Team Salary validation
-		if (isTeamSalary) {
+		let teamMemberName: string | undefined;
+		if (input.expenseType === "team_salary") {
 			if (!input.teamMemberId) {
 				throw new ORPCError("BAD_REQUEST", {
 					message: "Team member is required for team salary expenses",
@@ -147,6 +174,9 @@ export const createExpenseProcedure = protectedProcedure
 					message: "Team member not found",
 				});
 			}
+
+			// Store team member name for title generation
+			teamMemberName = teamMember.name;
 
 			// Check if team member is associated with this expense account
 			const isAssociated =
@@ -221,11 +251,7 @@ export const createExpenseProcedure = protectedProcedure
 		}
 
 		// One-Time expense validation
-		if (
-			categoryName.includes("one-time") ||
-			categoryName.includes("one time") ||
-			categoryName === "one-time"
-		) {
+		if (input.expenseType === "one_time") {
 			if (!input.title) {
 				throw new ORPCError("BAD_REQUEST", {
 					message: "Title is required for one-time expenses",
@@ -238,10 +264,10 @@ export const createExpenseProcedure = protectedProcedure
 						"Team member cannot be assigned to one-time expenses",
 				});
 			}
-			if (input.renewalFrequency || input.renewalDate) {
+			if (input.subscriptionId) {
 				throw new ORPCError("BAD_REQUEST", {
 					message:
-						"Renewal fields are not applicable for one-time expenses",
+						"Subscription cannot be assigned to one-time expenses",
 				});
 			}
 		}
@@ -288,7 +314,14 @@ export const createExpenseProcedure = protectedProcedure
 		const expenseData: any = {
 			businessId: input.businessId,
 			categoryId: input.categoryId,
-			title: input.title || `${category.name} Expense`,
+			expenseType: input.expenseType,
+			title:
+				input.title ||
+				(input.expenseType === "team_salary" && teamMemberName
+					? `${teamMemberName} - Salary Payment`
+					: input.expenseType === "subscription"
+						? "Subscription Payment"
+						: "Expense"),
 			description: input.description,
 			amount: input.amount,
 			currency: expenseCurrency,
@@ -302,8 +335,12 @@ export const createExpenseProcedure = protectedProcedure
 			createdBy: user.id,
 		};
 
-		// Add conditional fields
-		if (isTeamSalary && input.teamMemberId && input.salaryType) {
+		// Add conditional fields based on expenseType
+		if (
+			input.expenseType === "team_salary" &&
+			input.teamMemberId &&
+			input.salaryType
+		) {
 			expenseData.teamMemberId = input.teamMemberId;
 			expenseData.salaryMonth = input.salaryMonth;
 			// For team salary, set date to first day of the selected month
@@ -312,149 +349,15 @@ export const createExpenseProcedure = protectedProcedure
 			}
 		}
 
+		if (input.expenseType === "subscription" && input.subscriptionId) {
+			expenseData.subscriptionId = input.subscriptionId;
+		}
+
 		if (input.paymentMethodId) {
 			expenseData.paymentMethodId = input.paymentMethodId;
 		}
 
-		// Link to subscription if provided
-		if (input.subscriptionId) {
-			expenseData.subscriptionId = input.subscriptionId;
-
-			// Verify subscription exists and belongs to the same expense account
-			const { getSubscriptionById, updateSubscription } = await import(
-				"@repo/database"
-			);
-			const subscription = await getSubscriptionById(
-				input.subscriptionId,
-			);
-
-			if (!subscription) {
-				throw new ORPCError("BAD_REQUEST", {
-					message: "Subscription not found",
-				});
-			}
-
-			if (subscription.expenseAccountId !== input.businessId) {
-				throw new ORPCError("BAD_REQUEST", {
-					message:
-						"Subscription does not belong to this expense account",
-				});
-			}
-
-			if (subscription.status !== "active") {
-				throw new ORPCError("BAD_REQUEST", {
-					message: "Cannot add expenses to inactive subscription",
-				});
-			}
-
-			// Calculate new renewal date based on payment date and renewal type
-			const paymentDate = input.date;
-			const renewalType = subscription.renewalType || "from_payment_date";
-			const renewalFrequency = subscription.renewalFrequency || "monthly";
-
-			// Update subscription
-			const updateData: any = {};
-
-			if (input.updateSubscriptionAmount) {
-				updateData.currentAmount = input.amount;
-			}
-
-			// Always update renewal date if renewalType is "from_payment_date"
-			if (renewalType === "from_payment_date") {
-				// Calculate renewal date from payment date
-				let newRenewalDate: Date;
-				if (renewalFrequency === "monthly") {
-					newRenewalDate = addMonths(paymentDate, 1);
-				} else if (renewalFrequency === "yearly") {
-					newRenewalDate = addYears(paymentDate, 1);
-				} else if (renewalFrequency === "weekly") {
-					newRenewalDate = addDays(paymentDate, 7);
-				} else {
-					newRenewalDate = addMonths(paymentDate, 1); // Default to monthly
-				}
-
-				// Ensure renewal date is not in the past
-				const today = new Date();
-				today.setHours(0, 0, 0, 0);
-				const renewalDateToCheck = new Date(newRenewalDate);
-				renewalDateToCheck.setHours(0, 0, 0, 0);
-
-				if (renewalDateToCheck < today) {
-					// If calculated date is in past, add another period
-					if (renewalFrequency === "monthly") {
-						newRenewalDate = addMonths(newRenewalDate, 1);
-					} else if (renewalFrequency === "yearly") {
-						newRenewalDate = addYears(newRenewalDate, 1);
-					} else if (renewalFrequency === "weekly") {
-						newRenewalDate = addDays(newRenewalDate, 7);
-					}
-				}
-
-				updateData.renewalDate = newRenewalDate;
-				updateData.nextReminderDate = addDays(
-					newRenewalDate,
-					-(subscription.reminderDays || 7),
-				);
-			} else if (input.updateSubscriptionRenewalDate) {
-				// from_renewal_date: only update if manually specified
-				updateData.renewalDate = input.updateSubscriptionRenewalDate;
-				updateData.nextReminderDate = addDays(
-					input.updateSubscriptionRenewalDate,
-					-(subscription.reminderDays || 7),
-				);
-			}
-
-			if (Object.keys(updateData).length > 0) {
-				await updateSubscription({
-					id: input.subscriptionId,
-					...updateData,
-				});
-			}
-		}
-
 		const expense = await createExpense(expenseData);
-
-		// Legacy: Create subscription if category is subscription and no subscriptionId provided
-		// This is for backward compatibility during migration
-		if (
-			isSubscription &&
-			!input.subscriptionId &&
-			input.renewalFrequency &&
-			input.renewalDate
-		) {
-			// Calculate next reminder date (7 days before renewal)
-			const nextReminderDate = addDays(input.renewalDate, -7);
-
-			const { createSubscription } = await import("@repo/database");
-			await createSubscription({
-				expenseAccountId: input.businessId,
-				title: expenseData.title || `${category.name} Expense`,
-				description: expenseData.description,
-				currentAmount: input.amount,
-				currency: expenseCurrency,
-				startDate: input.date,
-				renewalDate: input.renewalDate,
-				renewalFrequency: input.renewalFrequency,
-				autoRenew: true,
-				reminderDays: 7,
-				nextReminderDate,
-				provider: input.provider,
-				status: "active",
-				expenseId: expense.id, // Legacy field
-			});
-
-			// Link expense to subscription
-			await db.expense.update({
-				where: { id: expense.id },
-				data: {
-					subscriptionId: (
-						await db.subscription.findFirst({
-							where: { expenseId: expense.id },
-						})
-					)?.id,
-				},
-			});
-		}
 
 		// Fetch expense with all relations
 		const { getExpenseById } = await import("@repo/database");

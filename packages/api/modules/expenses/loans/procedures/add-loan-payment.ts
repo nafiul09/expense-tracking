@@ -24,16 +24,16 @@ export const addLoanPaymentProcedure = protectedProcedure
 	.handler(async ({ context: { user }, input }) => {
 		const { id, amount, paymentDate, paymentMethod, notes } = input;
 
-		const loan = await getLoanById(id);
+	const loan = await getLoanById(id);
 
-		if (!loan) {
-			throw new ORPCError("NOT_FOUND", { message: "Loan not found" });
-		}
+	if (!loan) {
+		throw new ORPCError("NOT_FOUND", { message: "Loan not found" });
+	}
 
-		const membership = await verifyOrganizationMembership(
-			loan.expense.expenseAccount.organizationId,
-			user.id,
-		);
+	const membership = await verifyOrganizationMembership(
+		loan.expenseAccount.organizationId,
+		user.id,
+	);
 
 		if (!membership) {
 			throw new ORPCError("FORBIDDEN", {
@@ -48,20 +48,19 @@ export const addLoanPaymentProcedure = protectedProcedure
 			});
 		}
 
-		if (Number(loan.remainingAmount) < amount) {
-			throw new ORPCError("BAD_REQUEST", {
-				message: "Payment amount exceeds remaining loan amount",
-			});
-		}
-
-		const payment = await addLoanPayment({
-			loanId: id,
-			amount,
-			paymentDate,
-			paymentMethod,
-			notes,
-			recordedBy: user.id,
+	if (Number(loan.currentBalance) < amount) {
+		throw new ORPCError("BAD_REQUEST", {
+			message: "Payment amount exceeds remaining loan amount",
 		});
+	}
+
+	const payment = await addLoanPayment({
+		loanId: id,
+		amount,
+		paymentDate,
+		notes,
+		recordedBy: user.id,
+	});
 
 		return payment;
 	});

@@ -44,7 +44,7 @@ export async function GET(request: Request) {
 						renewalDate:
 							subscription.renewalDate.toLocaleDateString(),
 						businessName: expenseAccount.name,
-						amount: Number(subscription.currentAmount),
+						amount: Number(subscription.amount),
 						currency:
 							subscription.currency || expenseAccount.currency,
 					},

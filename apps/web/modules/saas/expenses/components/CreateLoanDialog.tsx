@@ -38,12 +38,18 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 const formSchema = z.object({
-	teamMemberId: z.string().min(1),
+	loanType: z.enum(["given", "taken"]),
+	partyName: z.string().min(1),
+	partyContact: z.string().optional(),
 	amount: z.number().positive(),
 	currency: z.string().min(1),
 	rateType: z.enum(["default", "custom"]).default("default").optional(),
 	customRate: z.number().positive().optional(),
+	interestRate: z.number().nonnegative().optional(),
+	interestType: z.enum(["simple", "compound"]).optional(),
 	loanDate: z.coerce.date(),
+	dueDate: z.coerce.date().optional(),
+	collateral: z.string().optional(),
 	notes: z.string().optional(),
 });
 
@@ -68,11 +74,6 @@ export function CreateLoanDialog({
 		queryFn: () => expensesApi.businesses.getDetails(businessId),
 	});
 
-	const { data: teamMembers } = useQuery({
-		queryKey: ["teamMembers", businessId],
-		queryFn: () => expensesApi.teamMembers.list(businessId),
-	});
-
 	const { data: currencyRates } = useQuery({
 		queryKey: ["currencyRates", business?.organizationId],
 		queryFn: () =>
@@ -85,12 +86,18 @@ export function CreateLoanDialog({
 	const form = useForm<FormValues>({
 		resolver: zodResolver(formSchema) as any,
 		defaultValues: {
-			teamMemberId: "",
+			loanType: "given",
+			partyName: "",
+			partyContact: "",
 			amount: 0,
 			currency: business?.currency || "USD",
 			rateType: "default",
 			customRate: undefined,
+			interestRate: undefined,
+			interestType: undefined,
 			loanDate: new Date(),
+			dueDate: undefined,
+			collateral: "",
 			notes: "",
 		},
 	});
@@ -109,12 +116,18 @@ export function CreateLoanDialog({
 	useEffect(() => {
 		if (open) {
 			form.reset({
-				teamMemberId: "",
+				loanType: "given",
+				partyName: "",
+				partyContact: "",
 				amount: 0,
 				currency: business?.currency || "USD",
 				rateType: "default",
 				customRate: undefined,
+				interestRate: undefined,
+				interestType: undefined,
 				loanDate: new Date(),
+				dueDate: undefined,
+				collateral: "",
 				notes: "",
 			});
 		}
@@ -189,9 +202,11 @@ export function CreateLoanDialog({
 
 	const onSubmit = async (values: FormValues) => {
 		try {
-			await expensesApi.loans.createStandalone({
-				teamMemberId: values.teamMemberId,
-				businessId,
+			await expensesApi.loans.create({
+				expenseAccountId: businessId,
+				loanType: values.loanType,
+				partyName: values.partyName,
+				partyContact: values.partyContact || undefined,
 				amount: values.amount,
 				currency: values.currency,
 				rateType: values.rateType,
@@ -199,16 +214,19 @@ export function CreateLoanDialog({
 					values.rateType === "custom"
 						? values.customRate
 						: undefined,
+				interestRate: values.interestRate,
+				interestType: values.interestType,
 				loanDate: values.loanDate,
-				notes: values.notes,
+				dueDate: values.dueDate,
+				collateral: values.collateral || undefined,
+				notes: values.notes || undefined,
 			});
 
-			toast.success(t("loans.messages.created"));
+			toast.success(
+				t("loans.messages.created") || "Loan created successfully",
+			);
 			queryClient.invalidateQueries({
 				queryKey: ["loans", businessId],
-			});
-			queryClient.invalidateQueries({
-				queryKey: ["teamMembers", businessId],
 			});
 			form.reset();
 			onOpenChange(false);
@@ -222,12 +240,14 @@ export function CreateLoanDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="max-w-2xl">
+			<DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
-					<DialogTitle>{t("loans.create")}</DialogTitle>
+					<DialogTitle>
+						{t("loans.create") || "Create Loan"}
+					</DialogTitle>
 					<DialogDescription>
 						{t("loans.form.createDescription") ||
-							"Record a loan given to a team member"}
+							"Create a new loan (given or taken)"}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -236,106 +256,85 @@ export function CreateLoanDialog({
 						onSubmit={form.handleSubmit(onSubmit)}
 						className="space-y-4"
 					>
+						{/* Loan Type */}
 						<FormField
 							control={form.control}
-							name="teamMemberId"
+							name="loanType"
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										{t("loans.form.selectTeamMember")}
+										{t("loans.form.loanType") ||
+											"Loan Type"}
 									</FormLabel>
-									<Select
-										onValueChange={field.onChange}
-										value={field.value}
-									>
-										<FormControl>
-											<SelectTrigger>
-												<SelectValue
-													placeholder={t(
-														"loans.form.selectTeamMember",
-													)}
+									<FormControl>
+										<RadioGroup
+											onValueChange={field.onChange}
+											value={field.value}
+											className="flex gap-6"
+										>
+											<div className="flex items-center space-x-2">
+												<RadioGroupItem
+													value="given"
+													id="loan-given"
 												/>
-											</SelectTrigger>
-										</FormControl>
-										<SelectContent>
-											{teamMembers?.map((member) => (
-												<SelectItem
-													key={member.id}
-													value={member.id}
-												>
-													{member.name}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
+												<Label htmlFor="loan-given">
+													{t(
+														"loans.form.loanGiven",
+													) || "Loan Given"}
+												</Label>
+											</div>
+											<div className="flex items-center space-x-2">
+												<RadioGroupItem
+													value="taken"
+													id="loan-taken"
+												/>
+												<Label htmlFor="loan-taken">
+													{t(
+														"loans.form.loanTaken",
+													) || "Loan Taken"}
+												</Label>
+											</div>
+										</RadioGroup>
+									</FormControl>
 									<FormMessage />
 								</FormItem>
 							)}
 						/>
 
-						{/* Currency Field */}
+						{/* Party Name */}
 						<FormField
 							control={form.control}
-							name="currency"
+							name="partyName"
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										{t("expenses.form.currency")}
+										{t("loans.form.partyName") ||
+										form.watch("loanType") === "given"
+											? "Borrower Name"
+											: "Lender Name"}
 									</FormLabel>
-									<Select
-										onValueChange={field.onChange}
-										value={field.value}
-									>
-										<FormControl>
-											<SelectTrigger>
-												<SelectValue />
-											</SelectTrigger>
-										</FormControl>
-										<SelectContent>
-											{availableCurrencies.map(
-												(currency) => (
-													<SelectItem
-														key={currency}
-														value={currency}
-													>
-														{currency}
-														{currency ===
-															accountCurrency &&
-															` (${t("common.default")})`}
-													</SelectItem>
-												),
-											)}
-										</SelectContent>
-									</Select>
+									<FormControl>
+										<Input {...field} />
+									</FormControl>
 									<FormMessage />
 								</FormItem>
 							)}
 						/>
 
-						{/* Amount Field */}
+						{/* Party Contact */}
 						<FormField
 							control={form.control}
-							name="amount"
+							name="partyContact"
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										{t("loans.form.loanAmount")}
+										{t("loans.form.partyContact") ||
+											"Contact Info (Optional)"}
 									</FormLabel>
 									<FormControl>
 										<Input
-											type="number"
-											step="0.01"
 											{...field}
 											value={field.value || ""}
-											onChange={(e) =>
-												field.onChange(
-													e.target.value
-														? Number.parseFloat(
-																e.target.value,
-															)
-														: 0,
-												)
-											}
 										/>
 									</FormControl>
 									<FormMessage />
@@ -343,43 +342,81 @@ export function CreateLoanDialog({
 							)}
 						/>
 
-						{/* Loan Date Field */}
-						<FormField
-							control={form.control}
-							name="loanDate"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t("loans.form.loanDate")}
-									</FormLabel>
-									<FormControl>
-										<Input
-											type="date"
-											{...field}
-											value={
-												field.value
-													? new Date(field.value)
-															.toISOString()
-															.split("T")[0]
-													: ""
-											}
-											onChange={(e) =>
-												field.onChange(
-													e.target.value
-														? new Date(
-																e.target.value,
-															)
-														: new Date(),
-												)
-											}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
+						<div className="grid grid-cols-2 gap-4">
+							{/* Currency Field */}
+							<FormField
+								control={form.control}
+								name="currency"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											{t("expenses.form.currency")}
+										</FormLabel>
+										<Select
+											onValueChange={field.onChange}
+											value={field.value}
+										>
+											<FormControl>
+												<SelectTrigger>
+													<SelectValue />
+												</SelectTrigger>
+											</FormControl>
+											<SelectContent>
+												{availableCurrencies.map(
+													(currency) => (
+														<SelectItem
+															key={currency}
+															value={currency}
+														>
+															{currency}
+															{currency ===
+																accountCurrency &&
+																` (${t("common.default")})`}
+														</SelectItem>
+													),
+												)}
+											</SelectContent>
+										</Select>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 
-						{/* Conversion Rate Section - Only show if currency differs from account currency */}
+							{/* Amount Field */}
+							<FormField
+								control={form.control}
+								name="amount"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											{t("loans.form.loanAmount") ||
+												"Loan Amount"}
+										</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												step="0.01"
+												{...field}
+												value={field.value || ""}
+												onChange={(e) =>
+													field.onChange(
+														e.target.value
+															? Number.parseFloat(
+																	e.target
+																		.value,
+																)
+															: 0,
+													)
+												}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						</div>
+
+						{/* Conversion Rate Section */}
 						{conversionData?.showConversion && (
 							<div className="space-y-4 rounded-lg border p-4">
 								<FormField
@@ -407,31 +444,6 @@ export function CreateLoanDialog({
 															{t(
 																"expenses.form.useDefaultRate",
 															)}
-															{currencyRates &&
-																selectedCurrency !==
-																	"USD" && (
-																	<span className="text-muted-foreground ml-2 text-sm">
-																		(1{" "}
-																		{
-																			selectedCurrency
-																		}{" "}
-																		={" "}
-																		{Number(
-																			currencyRates.find(
-																				(
-																					r,
-																				) =>
-																					r.toCurrency ===
-																					selectedCurrency,
-																			)
-																				?.rate ||
-																				0,
-																		).toFixed(
-																			4,
-																		)}{" "}
-																		USD)
-																	</span>
-																)}
 														</Label>
 													</div>
 													<div className="flex items-center space-x-2">
@@ -541,16 +553,194 @@ export function CreateLoanDialog({
 							</div>
 						)}
 
+						<div className="grid grid-cols-2 gap-4">
+							{/* Loan Date */}
+							<FormField
+								control={form.control}
+								name="loanDate"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											{t("loans.form.loanDate") ||
+												"Loan Date"}
+										</FormLabel>
+										<FormControl>
+											<Input
+												type="date"
+												{...field}
+												value={
+													field.value
+														? new Date(field.value)
+																.toISOString()
+																.split("T")[0]
+														: ""
+												}
+												onChange={(e) =>
+													field.onChange(
+														e.target.value
+															? new Date(
+																	e.target
+																		.value,
+																)
+															: new Date(),
+													)
+												}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							{/* Due Date */}
+							<FormField
+								control={form.control}
+								name="dueDate"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											{t("loans.form.dueDate") ||
+												"Due Date (Optional)"}
+										</FormLabel>
+										<FormControl>
+											<Input
+												type="date"
+												{...field}
+												value={
+													field.value
+														? new Date(field.value)
+																.toISOString()
+																.split("T")[0]
+														: ""
+												}
+												onChange={(e) =>
+													field.onChange(
+														e.target.value
+															? new Date(
+																	e.target
+																		.value,
+																)
+															: undefined,
+													)
+												}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						</div>
+
+						<div className="grid grid-cols-2 gap-4">
+							{/* Interest Rate */}
+							<FormField
+								control={form.control}
+								name="interestRate"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											{t("loans.form.interestRate") ||
+												"Interest Rate % (Optional)"}
+										</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												step="0.01"
+												{...field}
+												value={field.value || ""}
+												onChange={(e) =>
+													field.onChange(
+														e.target.value
+															? Number.parseFloat(
+																	e.target
+																		.value,
+																)
+															: undefined,
+													)
+												}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							{/* Interest Type */}
+							{form.watch("interestRate") && (
+								<FormField
+									control={form.control}
+									name="interestType"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												{t("loans.form.interestType") ||
+													"Interest Type"}
+											</FormLabel>
+											<Select
+												onValueChange={field.onChange}
+												value={field.value}
+											>
+												<FormControl>
+													<SelectTrigger>
+														<SelectValue />
+													</SelectTrigger>
+												</FormControl>
+												<SelectContent>
+													<SelectItem value="simple">
+														{t(
+															"loans.form.interestTypeSimple",
+														) || "Simple"}
+													</SelectItem>
+													<SelectItem value="compound">
+														{t(
+															"loans.form.interestTypeCompound",
+														) || "Compound"}
+													</SelectItem>
+												</SelectContent>
+											</Select>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							)}
+						</div>
+
+						{/* Collateral */}
+						<FormField
+							control={form.control}
+							name="collateral"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>
+										{t("loans.form.collateral") ||
+											"Collateral/Security (Optional)"}
+									</FormLabel>
+									<FormControl>
+										<Textarea
+											{...field}
+											value={field.value || ""}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
+						{/* Notes */}
 						<FormField
 							control={form.control}
 							name="notes"
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										{t("expenses.form.description")}
+										{t("expenses.form.description") ||
+											"Notes"}
 									</FormLabel>
 									<FormControl>
-										<Textarea {...field} />
+										<Textarea
+											{...field}
+											value={field.value || ""}
+										/>
 									</FormControl>
 									<FormMessage />
 								</FormItem>

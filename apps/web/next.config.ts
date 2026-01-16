@@ -24,6 +24,11 @@ const nextConfig: NextConfig = {
 				protocol: "https",
 				hostname: "share-og.webclarity.ai",
 			},
+			{
+				// google favicons for subscriptions
+				protocol: "https",
+				hostname: "www.google.com",
+			},
 		],
 	},
 	async redirects() {

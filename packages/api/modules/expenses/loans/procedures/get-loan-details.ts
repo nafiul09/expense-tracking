@@ -1,19 +1,16 @@
 import { ORPCError } from "@orpc/server";
-import {
-	getLoanById,
-	getLoanPayments,
-} from "@repo/database";
+import { getLoanById } from "@repo/database";
 import z from "zod";
 import { protectedProcedure } from "../../../../orpc/procedures";
 import { verifyOrganizationMembership } from "../../../organizations/lib/membership";
 
-export const getStandaloneLoanDetailsProcedure = protectedProcedure
+export const getLoanDetailsProcedure = protectedProcedure
 	.route({
 		method: "GET",
-		path: "/expenses/loans/standalone/:id",
+		path: "/expenses/loans/:id",
 		tags: ["Expenses"],
-		summary: "Get standalone loan details",
-		description: "Get loan details with payment history",
+		summary: "Get loan details",
+		description: "Get a single loan with payment history",
 	})
 	.input(
 		z.object({
@@ -24,7 +21,9 @@ export const getStandaloneLoanDetailsProcedure = protectedProcedure
 		const loan = await getLoanById(input.id);
 
 		if (!loan) {
-			throw new ORPCError("NOT_FOUND", { message: "Loan not found" });
+			throw new ORPCError("NOT_FOUND", {
+				message: "Loan not found",
+			});
 		}
 
 		const membership = await verifyOrganizationMembership(
@@ -33,13 +32,10 @@ export const getStandaloneLoanDetailsProcedure = protectedProcedure
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", { message: "Not a member of this workspace" });
+			throw new ORPCError("FORBIDDEN", {
+				message: "Not a member of this workspace",
+			});
 		}
 
-		const payments = await getLoanPayments(input.id);
-
-		return {
-			...loan,
-			payments,
-		};
+		return loan;
 	});

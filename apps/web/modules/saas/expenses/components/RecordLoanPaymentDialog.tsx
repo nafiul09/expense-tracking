@@ -44,7 +44,7 @@ const formSchema = z.object({
 	rateType: z.enum(["default", "custom"]).default("default").optional(),
 	customRate: z.number().positive().optional(),
 	paymentDate: z.coerce.date(),
-	paymentType: z.enum(["payment", "disbursement"]).default("payment"),
+	paymentType: z.enum(["principal", "interest", "both"]).default("principal"),
 	notes: z.string().optional(),
 });
 
@@ -73,7 +73,7 @@ export function RecordLoanPaymentDialog({
 
 	const { data: loan } = useQuery({
 		queryKey: ["loan", loanId],
-		queryFn: () => expensesApi.loans.getStandaloneDetails(loanId),
+		queryFn: () => expensesApi.loans.getDetails(loanId),
 		enabled: !!loanId && open,
 	});
 
@@ -94,7 +94,7 @@ export function RecordLoanPaymentDialog({
 			rateType: "default",
 			customRate: undefined,
 			paymentDate: new Date(),
-			paymentType: "payment",
+			paymentType: "principal",
 			notes: "",
 		},
 	});
@@ -118,7 +118,7 @@ export function RecordLoanPaymentDialog({
 				rateType: "default",
 				customRate: undefined,
 				paymentDate: new Date(),
-				paymentType: "payment",
+				paymentType: "principal",
 				notes: "",
 			});
 		}
@@ -126,10 +126,7 @@ export function RecordLoanPaymentDialog({
 
 	// Update currency default when loan data loads
 	useEffect(() => {
-		if (
-			loan?.currency &&
-			form.getValues("currency") !== loan.currency
-		) {
+		if (loan?.currency && form.getValues("currency") !== loan.currency) {
 			form.setValue("currency", loan.currency);
 		} else if (
 			business?.currency &&
@@ -166,7 +163,7 @@ export function RecordLoanPaymentDialog({
 				const rate = currencyRates?.find(
 					(r) => r.toCurrency === selectedCurrency,
 				)?.rate;
-				
+
 				if (!rate) {
 					return null;
 				}
@@ -206,7 +203,7 @@ export function RecordLoanPaymentDialog({
 	const onSubmit = async (values: FormValues) => {
 		// Recalculate conversion using form values
 		let paymentAmountInUSD = values.amount;
-		
+
 		// Step 1: Convert payment currency to USD (if not already USD)
 		if (values.currency !== "USD") {
 			if (values.rateType === "custom" && values.customRate) {
@@ -218,24 +215,30 @@ export function RecordLoanPaymentDialog({
 				const rate = currencyRates?.find(
 					(r) => r.toCurrency === values.currency,
 				)?.rate;
-				
+
 				if (!rate) {
-					toast.error(t("expenses.messages.currencyRateNotFound") || "Currency rate not found");
+					toast.error(
+						t("expenses.messages.currencyRateNotFound") ||
+							"Currency rate not found",
+					);
 					return;
 				}
 				paymentAmountInUSD = values.amount / Number(rate);
 			}
 		}
-		
+
 		// Step 2: Convert USD to account currency (if not already USD)
 		let finalAmount = paymentAmountInUSD;
 		if (accountCurrency !== "USD") {
 			const usdToAccountRate = currencyRates?.find(
 				(r) => r.toCurrency === accountCurrency,
 			)?.rate;
-			
+
 			if (!usdToAccountRate) {
-				toast.error(t("expenses.messages.currencyRateNotFound") || "Currency rate not found");
+				toast.error(
+					t("expenses.messages.currencyRateNotFound") ||
+						"Currency rate not found",
+				);
 				return;
 			}
 			finalAmount = paymentAmountInUSD * Number(usdToAccountRate);
@@ -247,14 +250,15 @@ export function RecordLoanPaymentDialog({
 		}
 
 		try {
-			await expensesApi.loans.recordStandalonePayment({
+			await expensesApi.loans.recordPayment({
 				id: loanId,
-				amount: values.amount, // Original input amount
-				currency: values.currency, // Original input currency
-				conversionRate:
+				amount: values.amount,
+				currency: values.currency,
+				rateType: values.rateType,
+				customRate:
 					values.rateType === "custom" && values.customRate
 						? values.customRate
-						: undefined, // Only pass if custom rate is used
+						: undefined,
 				paymentDate: values.paymentDate,
 				paymentType: values.paymentType,
 				notes: values.notes,
@@ -396,7 +400,8 @@ export function RecordLoanPaymentDialog({
 											}}
 										/>
 									</FormControl>
-									{convertedPaymentAmount > currentBalance && (
+									{convertedPaymentAmount >
+										currentBalance && (
 										<p className="text-destructive text-xs">
 											{t(
 												"loans.messages.paymentExceedsBalance",
@@ -629,7 +634,10 @@ export function RecordLoanPaymentDialog({
 										{t("expenses.form.description")}
 									</FormLabel>
 									<FormControl>
-										<Textarea {...field} value={field.value || ""} />
+										<Textarea
+											{...field}
+											value={field.value || ""}
+										/>
 									</FormControl>
 									<FormMessage />
 								</FormItem>

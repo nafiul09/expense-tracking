@@ -89,7 +89,7 @@ export default function ConsolidatedSubscriptionsDashboard({
 			(s) => s.status === "active",
 		);
 		const totalMonthlyCost = activeSubscriptions.reduce((sum, s) => {
-			const amount = Number(s.currentAmount || 0);
+			const amount = Number(s.amount || 0);
 			if (s.renewalFrequency === "monthly") {
 				return sum + amount;
 			}
@@ -386,13 +386,12 @@ export default function ConsolidatedSubscriptionsDashboard({
 											{subscription.title}
 										</TableCell>
 										<TableCell>
-											{subscription.provider || "-"}
+											{subscription.description || "-"}
 										</TableCell>
 										<TableCell>
 											{formatAmountWithOriginal(
 												Number(
-													subscription.currentAmount ||
-														0,
+													subscription.amount || 0,
 												),
 												subscription.currency ||
 													subscription.expenseAccount

@@ -16,6 +16,7 @@ export const updateExpenseProcedure = protectedProcedure
 		z.object({
 			id: z.string(),
 			categoryId: z.string().optional(),
+			expenseType: z.enum(["subscription", "team_salary", "one_time"]).optional(),
 			teamMemberId: z.string().optional().nullable(),
 			paymentMethodId: z.string().optional().nullable(),
 			title: z.string().min(1).max(255).optional(),
@@ -26,6 +27,7 @@ export const updateExpenseProcedure = protectedProcedure
 			receiptUrl: z.string().url().optional().nullable(),
 			status: z.string().optional(),
 			metadata: z.record(z.string(), z.any()).optional(),
+			subscriptionId: z.string().optional().nullable(),
 		}),
 	)
 	.handler(async ({ context: { user }, input }) => {

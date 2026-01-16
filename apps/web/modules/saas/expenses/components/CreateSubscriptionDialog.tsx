@@ -40,8 +40,8 @@ import { z } from "zod";
 const formSchema = z.object({
 	title: z.string().min(1).max(255),
 	description: z.string().optional(),
-	provider: z.string().optional(),
-	currentAmount: z.number().positive(),
+	websiteUrl: z.string().url().optional().or(z.literal("")),
+	amount: z.number().positive(), // Renamed from currentAmount
 	currency: z.string().min(1),
 	rateType: z.enum(["default", "custom"]).default("default").optional(),
 	customRate: z.number().positive().optional(),
@@ -49,10 +49,6 @@ const formSchema = z.object({
 	renewalFrequency: z
 		.enum(["monthly", "yearly", "weekly"])
 		.default("monthly"),
-	renewalType: z
-		.enum(["from_payment_date", "from_renewal_date"])
-		.default("from_payment_date"),
-	autoRenew: z.boolean().default(true),
 	reminderDays: z.number().int().min(1).max(30).default(7),
 	paymentMethodId: z.string().optional(),
 	categoryId: z.string().min(1), // Required for auto-creating expenses
@@ -128,15 +124,13 @@ export function CreateSubscriptionDialog({
 		defaultValues: {
 			title: "",
 			description: "",
-			provider: "",
-			currentAmount: 0,
+			websiteUrl: "",
+			amount: 0,
 			currency: business?.currency || "USD",
 			rateType: "default",
 			customRate: undefined,
 			startDate: new Date(),
 			renewalFrequency: "monthly",
-			renewalType: "from_payment_date",
-			autoRenew: true,
 			reminderDays: 7,
 			paymentMethodId: undefined,
 			categoryId: subscriptionCategory?.id || "",
@@ -149,15 +143,13 @@ export function CreateSubscriptionDialog({
 			form.reset({
 				title: "",
 				description: "",
-				provider: "",
-				currentAmount: 0,
+				websiteUrl: "",
+				amount: 0,
 				currency: business?.currency || "USD",
 				rateType: "default",
 				customRate: undefined,
 				startDate: new Date(),
 				renewalFrequency: "monthly",
-				renewalType: "from_payment_date",
-				autoRenew: true,
 				reminderDays: 7,
 				paymentMethodId: undefined,
 				categoryId: subscriptionCategory?.id || "",
@@ -182,8 +174,8 @@ export function CreateSubscriptionDialog({
 				categoryId: values.categoryId,
 				title: values.title,
 				description: values.description,
-				provider: values.provider,
-				currentAmount: values.currentAmount,
+				websiteUrl: values.websiteUrl || undefined,
+				amount: values.amount,
 				currency: values.currency,
 				rateType: values.rateType,
 				customRate:
@@ -192,8 +184,6 @@ export function CreateSubscriptionDialog({
 						: undefined,
 				startDate: values.startDate,
 				renewalFrequency: values.renewalFrequency,
-				renewalType: values.renewalType,
-				autoRenew: values.autoRenew,
 				reminderDays: values.reminderDays,
 				paymentMethodId:
 					values.paymentMethodId &&
@@ -251,10 +241,11 @@ export function CreateSubscriptionDialog({
 	}
 
 	const selectedCurrency = form.watch("currency");
-	const amountValue = form.watch("currentAmount");
+	const amountValue = form.watch("amount");
 	const rateType = form.watch("rateType");
 	const customRate = form.watch("customRate");
 	const accountCurrency = business?.currency || "USD";
+	const websiteUrl = form.watch("websiteUrl");
 
 	// Calculate conversion display
 	const calculateConversion = () => {
@@ -364,21 +355,34 @@ export function CreateSubscriptionDialog({
 
 						<FormField
 							control={form.control}
-							name="provider"
+							name="websiteUrl"
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										{t(
-											"expenses.subscriptions.table.provider",
-										)}
+										{t("expenses.subscriptions.websiteUrl") ||
+											"Website URL"}
 									</FormLabel>
 									<FormControl>
 										<Input
 											{...field}
+											type="url"
+											placeholder="https://example.com"
 											value={field.value || ""}
 										/>
 									</FormControl>
 									<FormMessage />
+									{websiteUrl && (
+										<div className="flex items-center gap-2">
+											<img
+												src={`https://www.google.com/s2/favicons?domain=${new URL(websiteUrl).hostname}&sz=32`}
+												alt="Website icon"
+												className="size-4"
+											/>
+											<span className="text-muted-foreground text-xs">
+												Favicon will be auto-fetched
+											</span>
+										</div>
+									)}
 								</FormItem>
 							)}
 						/>
@@ -386,13 +390,12 @@ export function CreateSubscriptionDialog({
 						<div className="grid grid-cols-2 gap-4">
 							<FormField
 								control={form.control}
-								name="currentAmount"
+								name="amount"
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>
-											{t(
-												"expenses.subscriptions.currentAmount",
-											)}
+											{t("expenses.subscriptions.amount") ||
+												"Amount"}
 										</FormLabel>
 										<FormControl>
 											<Input
@@ -693,50 +696,6 @@ export function CreateSubscriptionDialog({
 							/>
 						</div>
 
-						<FormField
-							control={form.control}
-							name="renewalType"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t(
-											"expenses.subscriptions.renewalType.label",
-										) || "Renewal Type"}
-									</FormLabel>
-									<FormControl>
-										<RadioGroup
-											onValueChange={field.onChange}
-											value={field.value}
-											className="flex gap-6"
-										>
-											<div className="flex items-center space-x-2">
-												<RadioGroupItem
-													value="from_payment_date"
-													id="renewal-payment"
-												/>
-												<Label htmlFor="renewal-payment">
-													{t(
-														"expenses.subscriptions.renewalType.fromPaymentDate",
-													) || "From Payment Date"}
-												</Label>
-											</div>
-											<div className="flex items-center space-x-2">
-												<RadioGroupItem
-													value="from_renewal_date"
-													id="renewal-renewal"
-												/>
-												<Label htmlFor="renewal-renewal">
-													{t(
-														"expenses.subscriptions.renewalType.fromRenewalDate",
-													) || "From Renewal Date"}
-												</Label>
-											</div>
-										</RadioGroup>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
 
 						<div className="grid grid-cols-2 gap-4">
 							<FormField

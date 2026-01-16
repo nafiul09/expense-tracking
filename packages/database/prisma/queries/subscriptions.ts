@@ -190,18 +190,20 @@ export async function createSubscription(data: {
 	expenseAccountId: string;
 	title: string;
 	description?: string;
-	provider?: string;
-	currentAmount: number;
+	websiteUrl?: string;
+	websiteIcon?: string;
+	amount: number; // Renamed from currentAmount
 	currency?: string;
+	conversionRate?: number;
+	rateType?: string;
+	baseCurrencyAmount?: number;
 	startDate: Date;
 	renewalDate: Date;
 	renewalFrequency?: string;
-	renewalType?: string;
-	autoRenew?: boolean;
 	reminderDays?: number;
 	nextReminderDate?: Date;
+	paymentMethodId?: string;
 	status?: string;
-	expenseId?: string; // Legacy field for migration
 }) {
 	return db.subscription.create({
 		data,
@@ -224,7 +226,6 @@ export async function cancelSubscription(id: string) {
 		data: {
 			status: "cancelled",
 			cancelationDate: new Date(),
-			autoRenew: false,
 		},
 	});
 }

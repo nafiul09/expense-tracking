@@ -234,6 +234,7 @@
 		"save": "Save",
 		"delete": "Delete",
 		"create": "Create",
+		"edit": "Edit",
 		"none": "None",
 		"notAvailable": "Not available",
 		"default": "Default",
@@ -242,6 +243,11 @@
 		"showing": "Showing {start} to {end} of {total}",
 		"previous": "Previous",
 		"next": "Next",
+		"date": "Date",
+		"amount": "Amount",
+		"totalPaid": "Total Paid",
+		"recordedBy": "Recorded By",
+		"email": "Email",
 		"confirmation": {
 			"cancel": "Cancel",
 			"confirm": "Confirm"
@@ -1152,7 +1158,13 @@
 			"currency": "Currency",
 			"salaryMonth": "Salary Month",
 			"conversionBreakdown": "Conversion Breakdown",
-			"recordedAs": "Will be recorded as"
+			"recordedAs": "Will be recorded as",
+			"expenseType": "Expense Type"
+		},
+		"expenseType": {
+			"subscription": "Subscription",
+			"teamSalary": "Team Salary",
+			"oneTime": "One-Time"
 		},
 		"table": {
 			"title": "Title",
@@ -1197,6 +1209,18 @@
 			"createDescription": "Add a new team member to track salaries and loans.",
 			"created": "Team member created successfully",
 			"createError": "Failed to create team member",
+			"edit": "Edit Team Member",
+			"editDescription": "Update team member information",
+			"updated": "Team member updated successfully",
+			"updateError": "Failed to update team member",
+			"deleteTitle": "Delete Team Member",
+			"deleteWarning": "Are you sure you want to delete this team member?",
+			"deleteNote": "What happens when you delete:",
+			"deletePoint1": "The team member will be removed from the list",
+			"deletePoint2": "Past salary payment records will be preserved",
+			"deletePoint3": "This action cannot be undone",
+			"deleted": "Team member deleted successfully",
+			"deleteError": "Failed to delete team member",
 			"form": {
 				"name": "Name",
 				"email": "Email",
@@ -1216,9 +1240,19 @@
 				"salary": "Salary",
 				"status": "Status",
 				"email": "Email",
+				"joinDate": "Join Date",
+				"totalPaid": "Total Paid",
 				"actions": "Actions"
 			},
 			"empty": "No team members found",
+			"viewDetails": "View Details",
+			"details": "Team Member Details",
+			"notFound": "Team member not found",
+			"information": "Member Information",
+			"monthlySalary": "Monthly Salary",
+			"lifetimePayments": "{count} payments",
+			"salaryHistory": "Salary Payment History",
+			"noSalaryPayments": "No salary payments recorded yet",
 			"consolidated": {
 				"title": "Team Members",
 				"subtitle": "Manage team members and their account associations",
@@ -1251,6 +1285,8 @@
 			"createNew": "Create New Subscription",
 			"createFromTab": "Please create subscription from the Subscriptions tab first",
 			"startDate": "Start Date",
+			"websiteUrl": "Website URL",
+			"amount": "Amount",
 			"table": {
 				"name": "Name",
 				"amount": "Amount",
@@ -1267,6 +1303,17 @@
 			"editDescription": "Update subscription details and settings",
 			"updated": "Subscription updated successfully",
 			"updateError": "Failed to update subscription",
+			"deleted": "Subscription deleted successfully",
+			"deleteError": "Failed to delete subscription",
+			"deleteTitle": "Delete Subscription",
+			"deleteWarning": "Are you sure you want to permanently delete this subscription?",
+			"deleteSuggestion": "💡 Suggestion:",
+			"deleteSuggestionText": "We recommend using 'Inactive' or 'Cancelled' status from the Edit modal instead. This will keep your subscription data tracked properly for reports and history.",
+			"deleteNote": "Warning: This action cannot be undone!",
+			"deletePoint1": "This will permanently remove the subscription record",
+			"deletePoint2": "Past expense records will be kept but unlinked from this subscription",
+			"deletePoint3": "No new expenses will be automatically created",
+			"deletePoint4": "If you want to temporarily stop the subscription, use 'Cancelled' status in Edit instead",
 			"reminderDays": "Reminder Days Before Renewal",
 			"renewalDatePastError": "Renewal date cannot be in the past",
 			"renewalType": {
@@ -1310,39 +1357,64 @@
 		},
 		"loans": {
 			"table": {
-				"teamMember": "Team Member",
+				"loanType": "Loan Type",
+				"type": "Type",
+				"partyName": "Party Name",
+				"party": "Party",
 				"principal": "Principal",
 				"remaining": "Remaining",
 				"date": "Date",
+				"dueDate": "Due Date",
 				"status": "Status",
 				"loanDate": "Loan Date",
-				"progress": "Progress"
+				"progress": "Progress",
+				"actions": "Actions"
 			},
 			"status": {
 				"active": "Active",
 				"partial": "Partial",
 				"paid": "Paid",
+				"defaulted": "Defaulted",
 				"cancelled": "Cancelled"
 			},
 			"empty": "No loans found",
+			"messages": {
+				"deleted": "Loan deleted successfully",
+				"deleteError": "Failed to delete loan"
+			},
+			"deleteTitle": "Delete Loan",
+			"deleteWarning": "Are you sure you want to permanently delete this loan?",
+			"deleteNote": "What happens when you delete:",
+			"deletePoint1": "The loan record will be permanently removed",
+			"deletePoint2": "Payment history will be deleted",
+			"deletePoint3": "This action cannot be undone",
+			"deleteSuggestion": "Suggestion",
+			"deleteSuggestionText": "Consider marking the loan as \"Cancelled\" instead of deleting it to maintain your records.",
 			"consolidated": {
-				"title": "Team Member Loans",
-				"subtitle": "Track loans across all expense accounts",
+				"title": "All Loans",
+				"subtitle": "Track loans given and taken across all expense accounts",
 				"totalActive": "Total Active",
 				"totalOutstanding": "Total Outstanding",
 				"totalPaid": "Total Paid",
+				"totalGiven": "Total Given",
+				"totalTaken": "Total Taken",
 				"expenseAccount": "Expense Account"
 			},
 			"filters": {
+				"type": "Loan Type",
+				"typeAll": "All",
+				"typeGiven": "Given",
+				"typeTaken": "Taken",
 				"status": "Status",
 				"statusAll": "All",
 				"statusActive": "Active",
 				"statusPartial": "Partial",
 				"statusPaid": "Paid",
+				"statusDefaulted": "Defaulted",
+				"partyName": "Party Name",
 				"loanDateStart": "Loan Date Start",
 				"loanDateEnd": "Loan Date End",
-				"expenseAccounts": "Expense Accounts",
-				"teamMembers": "Team Members"
+				"expenseAccounts": "Expense Accounts"
 			}
 		},
 		"oneTime": {
@@ -1510,41 +1582,77 @@
 		}
 	},
 	"loans": {
-		"create": "Give Loan",
+		"create": "Create Loan",
+		"createGiven": "Give Loan",
+		"createTaken": "Record Borrowed Loan",
 		"recordPayment": "Record Payment",
 		"viewHistory": "View Payment History",
 		"currentBalance": "Current Balance",
 		"principalAmount": "Principal Amount",
 		"totalOutstanding": "Total Outstanding",
 		"paymentHistory": "Payment History",
+		"noPayments": "No payments recorded yet",
+		"loanType": {
+			"given": "Loan Given",
+			"taken": "Loan Taken"
+		},
 		"form": {
-			"selectTeamMember": "Select team member",
+			"loanType": "Loan Type",
+			"loanGiven": "Loan Given",
+			"loanTaken": "Loan Taken",
+			"loanTypeGiven": "Given (You lent money)",
+			"loanTypeTaken": "Taken (You borrowed money)",
+			"partyName": "Party Name",
+			"partyNamePlaceholder": "Name of person or entity",
+			"partyContact": "Contact Information (optional)",
 			"loanAmount": "Loan Amount",
 			"paymentAmount": "Payment Amount",
 			"loanDate": "Loan Date",
+			"dueDate": "Due Date (optional)",
 			"paymentDate": "Payment Date",
+			"interestRate": "Interest Rate (% per year)",
+			"interestType": "Interest Type",
+			"interestTypeSimple": "Simple",
+			"interestTypeCompound": "Compound",
+			"interestTypeNone": "No Interest",
+			"collateral": "Collateral / Security Notes (optional)",
+			"notes": "Additional Notes (optional)",
+			"paymentType": "Payment Type",
+			"paymentTypePrincipal": "Principal Only",
+			"paymentTypeInterest": "Interest Only",
+			"paymentTypeBoth": "Principal + Interest",
 			"remainingBalance": "Remaining Balance: {amount}",
-			"createDescription": "Record a loan given to a team member",
+			"createDescription": "Record a loan transaction",
 			"recordPaymentDescription": "Record a payment towards this loan",
 			"willDeduct": "Will deduct {amount} from loan balance"
 		},
 		"status": {
 			"active": "Active",
 			"paid": "Paid",
+			"defaulted": "Defaulted",
 			"cancelled": "Cancelled"
 		},
 		"messages": {
 			"created": "Loan recorded successfully",
 			"createError": "Failed to create loan",
+			"updated": "Loan updated successfully",
+			"updateError": "Failed to update loan",
+			"deleted": "Loan deleted successfully",
+			"deleteError": "Failed to delete loan",
 			"paymentRecorded": "Payment recorded successfully",
 			"paymentError": "Failed to record payment",
 			"paidInFull": "Loan has been paid in full",
 			"paymentExceedsBalance": "Payment amount cannot exceed current balance"
 		},
-		"selectLoanFirst": "Select a loan from the table first"
+		"selectLoanFirst": "Select a loan from the table first",
+		"noActiveLoans": "No active loans with remaining balance",
+		"partyInfo": "Party Information",
+		"loanInfo": "Loan Information",
+		"interestInfo": "Interest Information",
+		"accruedInterest": "Accrued Interest",
+		"totalWithInterest": "Total with Interest"
 	},
 	"teamMembers": {
-		"loanBalance": "Loan Balance",
 		"noLoans": "No outstanding loans"
 	}
 }

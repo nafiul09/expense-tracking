@@ -16,6 +16,7 @@ export const listExpensesProcedure = protectedProcedure
 		z.object({
 			businessId: z.string(),
 			categoryId: z.string().optional(),
+			expenseType: z.enum(["subscription", "team_salary", "one_time"]).optional(),
 			teamMemberId: z.string().optional(),
 			startDate: z.coerce.date().optional(),
 			endDate: z.coerce.date().optional(),

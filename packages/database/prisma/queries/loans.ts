@@ -1,76 +1,95 @@
-import type { TeamMemberLoanUpdateInput } from "../generated/models/TeamMemberLoan";
-import type { LoanPaymentCreateInput } from "../generated/models/LoanPayment";
 import { db } from "../client";
+import type { LoanUpdateInput } from "../generated/models/Loan";
 
 export async function getLoanById(id: string) {
-	return db.teamMemberLoan.findUnique({
+	return db.loan.findUnique({
 		where: { id },
 		include: {
-			expense: {
-				include: {
-					expenseAccount: true,
-					category: true,
+			expenseAccount: {
+				select: {
+					id: true,
+					name: true,
+					currency: true,
+					organizationId: true,
 				},
 			},
-			teamMember: true,
+			creator: {
+				select: {
+					id: true,
+					name: true,
+					email: true,
+				},
+			},
 			payments: {
-				orderBy: {
-					paymentDate: "desc",
-				},
-			},
-		},
-	});
-}
-
-export async function getLoanByExpenseId(expenseId: string) {
-	return db.teamMemberLoan.findUnique({
-		where: { expenseId },
-		include: {
-			teamMember: true,
-			payments: {
-				orderBy: {
-					paymentDate: "desc",
-				},
-			},
-		},
-	});
-}
-
-export async function getLoansByBusinessId(
-	businessId: string,
-	status?: string,
-	teamMemberId?: string,
-) {
-	const where: any = {
-		expense: {
-			businessId,
-		},
-	};
-
-	if (status) {
-		where.status = status;
-	}
-
-	if (teamMemberId) {
-		where.teamMemberId = teamMemberId;
-	}
-
-	return db.teamMemberLoan.findMany({
-		where,
-		include: {
-			expense: {
 				include: {
-					expenseAccount: {
+					recorder: {
 						select: {
 							id: true,
 							name: true,
-							currency: true,
+							email: true,
 						},
 					},
-					category: true,
+				},
+				orderBy: {
+					paymentDate: "desc",
 				},
 			},
-			teamMember: {
+		},
+	});
+}
+
+export async function getLoansByExpenseAccountId(
+	expenseAccountId: string,
+	options?: {
+		loanType?: string;
+		status?: string;
+		partyName?: string;
+		startDate?: Date;
+		endDate?: Date;
+		limit?: number;
+		offset?: number;
+	},
+) {
+	const where: any = {
+		expenseAccountId,
+	};
+
+	if (options?.loanType) {
+		where.loanType = options.loanType;
+	}
+
+	if (options?.status) {
+		where.status = options.status;
+	}
+
+	if (options?.partyName) {
+		where.partyName = {
+			contains: options.partyName,
+			mode: "insensitive",
+		};
+	}
+
+	if (options?.startDate || options?.endDate) {
+		where.loanDate = {};
+		if (options.startDate) {
+			where.loanDate.gte = options.startDate;
+		}
+		if (options.endDate) {
+			where.loanDate.lte = options.endDate;
+		}
+	}
+
+	return db.loan.findMany({
+		where,
+		include: {
+			expenseAccount: {
+				select: {
+					id: true,
+					name: true,
+					currency: true,
+				},
+			},
+			creator: {
 				select: {
 					id: true,
 					name: true,
@@ -86,6 +105,8 @@ export async function getLoansByBusinessId(
 		orderBy: {
 			loanDate: "desc",
 		},
+		take: options?.limit,
+		skip: options?.offset,
 	});
 }
 
@@ -93,58 +114,61 @@ export async function getAllLoansByOrganizationId(
 	organizationId: string,
 	options?: {
 		accountIds?: string[];
-		teamMemberIds?: string[];
+		loanType?: string;
 		status?: string;
-		loanDateStart?: Date;
-		loanDateEnd?: Date;
+		partyName?: string;
+		startDate?: Date;
+		endDate?: Date;
+		limit?: number;
+		offset?: number;
 	},
 ) {
 	const where: any = {
-		expense: {
-			expenseAccount: {
-				organizationId,
-			},
+		expenseAccount: {
+			organizationId,
 		},
 	};
 
 	if (options?.accountIds && options.accountIds.length > 0) {
-		where.expense.businessId = { in: options.accountIds };
+		where.expenseAccountId = { in: options.accountIds };
 	}
 
-	if (options?.teamMemberIds && options.teamMemberIds.length > 0) {
-		where.teamMemberId = { in: options.teamMemberIds };
+	if (options?.loanType) {
+		where.loanType = options.loanType;
 	}
 
 	if (options?.status) {
 		where.status = options.status;
 	}
 
-	if (options?.loanDateStart || options?.loanDateEnd) {
+	if (options?.partyName) {
+		where.partyName = {
+			contains: options.partyName,
+			mode: "insensitive",
+		};
+	}
+
+	if (options?.startDate || options?.endDate) {
 		where.loanDate = {};
-		if (options.loanDateStart) {
-			where.loanDate.gte = options.loanDateStart;
+		if (options.startDate) {
+			where.loanDate.gte = options.startDate;
 		}
-		if (options.loanDateEnd) {
-			where.loanDate.lte = options.loanDateEnd;
+		if (options.endDate) {
+			where.loanDate.lte = options.endDate;
 		}
 	}
 
-	return db.teamMemberLoan.findMany({
+	return db.loan.findMany({
 		where,
 		include: {
-			expense: {
-				include: {
-					expenseAccount: {
-						select: {
-							id: true,
-							name: true,
-							currency: true,
-						},
-					},
-					category: true,
+			expenseAccount: {
+				select: {
+					id: true,
+					name: true,
+					currency: true,
 				},
 			},
-			teamMember: {
+			creator: {
 				select: {
 					id: true,
 					name: true,
@@ -160,43 +184,63 @@ export async function getAllLoansByOrganizationId(
 		orderBy: {
 			loanDate: "desc",
 		},
+		take: options?.limit,
+		skip: options?.offset,
 	});
 }
 
 export async function createLoan(data: {
-	expenseId: string;
-	teamMemberId: string;
+	expenseAccountId: string;
+	loanType: string; // "given" or "taken"
+	partyName: string;
+	partyContact?: string;
 	principalAmount: number;
-	remainingAmount: number;
+	currentBalance: number;
+	currency?: string;
+	conversionRate?: number;
+	rateType?: string;
+	baseCurrencyAmount?: number;
+	interestRate?: number;
+	interestType?: string;
 	loanDate: Date;
+	dueDate?: Date;
+	collateral?: string;
 	notes?: string;
 	status?: string;
+	createdBy: string;
 }) {
-	return db.teamMemberLoan.create({
+	return db.loan.create({
 		data,
 	});
 }
 
-export async function updateLoan(
-	data: TeamMemberLoanUpdateInput & { id: string },
-) {
+export async function updateLoan(data: LoanUpdateInput & { id: string }) {
 	const { id, ...updateData } = data;
-	return db.teamMemberLoan.update({
+	return db.loan.update({
 		where: { id },
-		data: updateData as TeamMemberLoanUpdateInput,
+		data: updateData as LoanUpdateInput,
+	});
+}
+
+export async function deleteLoan(id: string) {
+	// Hard delete - permanently remove the loan record
+	return db.loan.delete({
+		where: { id },
 	});
 }
 
 export async function addLoanPayment(data: {
 	loanId: string;
 	amount: number;
+	currency?: string;
+	conversionRate?: number;
 	paymentDate: Date;
-	paymentMethod?: string;
+	paymentType?: string; // "principal", "interest", "both"
 	notes?: string;
 	recordedBy: string;
 }) {
-	// Update loan remaining amount
-	const loan = await db.teamMemberLoan.findUnique({
+	// Update loan current balance
+	const loan = await db.loan.findUnique({
 		where: { id: data.loanId },
 	});
 
@@ -204,25 +248,66 @@ export async function addLoanPayment(data: {
 		throw new Error("Loan not found");
 	}
 
-	const newRemainingAmount = Number(loan.remainingAmount) - data.amount;
-	const status = newRemainingAmount <= 0 ? "paid" : "partial";
+	// Calculate new balance based on payment type
+	let newBalance = Number(loan.currentBalance);
+	let newAccruedInterest = Number(loan.accruedInterest || 0);
 
-	await db.teamMemberLoan.update({
+	if (data.paymentType === "principal" || data.paymentType === "both") {
+		newBalance = newBalance - data.amount;
+	}
+	if (data.paymentType === "interest" || data.paymentType === "both") {
+		if (data.paymentType === "both") {
+			// Split payment between principal and interest
+			// For now, apply full amount to principal, then interest
+			newBalance = newBalance - data.amount;
+		} else {
+			newAccruedInterest = Math.max(0, newAccruedInterest - data.amount);
+		}
+	}
+
+	// Update status based on balance
+	let status = loan.status;
+	if (newBalance <= 0 && newAccruedInterest <= 0) {
+		status = "paid";
+	} else if (newBalance < Number(loan.currentBalance)) {
+		status = "active"; // Keep active if partially paid
+	}
+
+	await db.loan.update({
 		where: { id: data.loanId },
 		data: {
-			remainingAmount: newRemainingAmount,
+			currentBalance: newBalance,
+			accruedInterest: newAccruedInterest,
 			status,
 		},
 	});
 
 	return db.loanPayment.create({
-		data,
+		data: {
+			loanId: data.loanId,
+			amount: data.amount,
+			currency: data.currency || loan.currency,
+			conversionRate: data.conversionRate,
+			paymentDate: data.paymentDate,
+			paymentType: data.paymentType || "principal",
+			notes: data.notes,
+			recordedBy: data.recordedBy,
+		},
 	});
 }
 
 export async function getLoanPayments(loanId: string) {
 	return db.loanPayment.findMany({
 		where: { loanId },
+		include: {
+			recorder: {
+				select: {
+					id: true,
+					name: true,
+					email: true,
+				},
+			},
+		},
 		orderBy: {
 			paymentDate: "desc",
 		},

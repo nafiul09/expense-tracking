@@ -21,7 +21,6 @@ export const createSubscriptionProcedure = protectedProcedure
 				.default("monthly"),
 			autoRenew: z.boolean().default(true),
 			reminderDays: z.number().int().min(1).max(30).default(7),
-			provider: z.string().optional(),
 			status: z.enum(["active", "cancelled", "paused"]).default("active"),
 		}),
 	)
@@ -31,7 +30,9 @@ export const createSubscriptionProcedure = protectedProcedure
 		const expense = await getExpenseById(expenseId);
 
 		if (!expense) {
-			throw new ORPCError("BAD_REQUEST", { message: "Expense not found" });
+			throw new ORPCError("BAD_REQUEST", {
+				message: "Expense not found",
+			});
 		}
 
 		const membership = await verifyOrganizationMembership(
@@ -40,7 +41,9 @@ export const createSubscriptionProcedure = protectedProcedure
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", { message: "Not a member of this workspace" });
+			throw new ORPCError("FORBIDDEN", {
+				message: "Not a member of this workspace",
+			});
 		}
 
 		// Calculate next reminder date
@@ -52,19 +55,15 @@ export const createSubscriptionProcedure = protectedProcedure
 			expenseAccountId: expense.expenseAccount.id,
 			title: expense.title,
 			description: expense.description || undefined,
-			provider: input.provider,
-			currentAmount: Number(expense.amount),
+			amount: Number(expense.amount),
 			currency:
 				expense.currency || expense.expenseAccount.currency || "USD",
 			startDate: expense.date,
 			renewalDate: input.renewalDate,
 			renewalFrequency: input.renewalFrequency,
-			renewalType: "from_renewal_date",
-			autoRenew: input.autoRenew,
 			reminderDays: input.reminderDays,
 			nextReminderDate,
 			status: input.status,
-			expenseId: expense.id, // Legacy field for migration
 		});
 
 		// Link expense to subscription
