@@ -1,4 +1,5 @@
 import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 import { PrismaClient } from "./generated/client";
 
 const prismaClientSingleton = () => {
@@ -6,11 +7,33 @@ const prismaClientSingleton = () => {
 		throw new Error("DATABASE_URL is not set");
 	}
 
-	const adapter = new PrismaPg({
+	// Environment-aware configuration
+	const isDev = process.env.NODE_ENV !== "production";
+
+	// Configure connection pool with appropriate settings per environment
+	const pool = new Pool({
 		connectionString: process.env.DATABASE_URL,
+
+		// Connection pool limits (smaller in dev, larger in production)
+		max: isDev ? 10 : 20, // Max concurrent connections
+		min: isDev ? 2 : 5, // Keep warm connections ready
+
+		// Timeouts - Allow enough time for cold starts on free tier services
+		connectionTimeoutMillis: 30000, // 30s to establish connection (Neon free tier can be slow)
+		idleTimeoutMillis: isDev ? 30000 : 60000, // Close idle connections after
+		statement_timeout: isDev ? 20000 : 30000, // Max query execution time (20s dev, 30s prod)
+
+		// Keep connections alive (prevents drops by firewalls/proxies)
+		keepAlive: true,
+		keepAliveInitialDelayMillis: 10000,
 	});
 
-	return new PrismaClient({ adapter });
+	const adapter = new PrismaPg(pool);
+
+	return new PrismaClient({
+		adapter,
+		log: isDev ? ["error", "warn"] : ["error"],
+	});
 };
 
 declare global {
