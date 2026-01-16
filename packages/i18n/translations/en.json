@@ -1442,18 +1442,24 @@
 			"last30Days": "Last 30 Days",
 			"currentMonth": "Current Month",
 			"totalExpenses": "Total Expenses",
-			"expenseAccount": "Expense Account"
+			"expenseAccount": "Expense Account",
+			"total": "Total",
+			"subtotal": "Subtotal"
 		},
 		"filters": {
 			"startDate": "Start Date",
 			"endDate": "End Date",
+			"dateRange": "Date Range",
 			"expenseAccounts": "Expense Accounts",
+			"expenseType": "Expense Type",
+			"expenseTypeAll": "All Types",
 			"status": "Status",
 			"statusAll": "All",
 			"statusActive": "Active",
 			"statusCancelled": "Cancelled",
 			"search": "Search",
-			"searchPlaceholder": "Search by title or description"
+			"searchPlaceholder": "Search by title or description",
+			"displayCurrency": "Display Currency"
 		},
 		"generateReport": "Generate Report",
 		"reports": {

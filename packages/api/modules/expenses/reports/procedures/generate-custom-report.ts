@@ -58,7 +58,9 @@ export const generateCustomReportProcedure = protectedProcedure
 		const organization = await getOrganizationById(organizationId);
 
 		if (!organization) {
-			throw new ORPCError("BAD_REQUEST", { message: "Organization not found" });
+			throw new ORPCError("BAD_REQUEST", {
+				message: "Organization not found",
+			});
 		}
 
 		const membership = await verifyOrganizationMembership(
@@ -67,37 +69,21 @@ export const generateCustomReportProcedure = protectedProcedure
 		);
 
 		if (!membership) {
-			throw new ORPCError("FORBIDDEN", { message: "Not a member of this workspace" });
+			throw new ORPCError("FORBIDDEN", {
+				message: "Not a member of this workspace",
+			});
 		}
 
 		// Get currency rates for conversion
 		const currencyRates =
 			await getCurrencyRatesByOrganization(organizationId);
 
-		// Get category IDs for the report type
-		let categoryIds: string[] | undefined;
-		if (reportType !== "all_categories") {
-			// Map report type to category name
-			const categoryNameMap: Record<string, string> = {
-				subscription: "Subscription",
-				team_salary: "Team Salary",
-				one_time: "One-time",
-				team_member_loan: "Team Member Loan",
-			};
-
-			const categoryName = categoryNameMap[reportType];
-			if (categoryName) {
-				// We'll need to fetch categories and filter by name
-				// For now, we'll filter expenses by category name in the query
-				categoryIds = undefined; // Will filter by category name in getAllExpensesByOrganizationId
-			}
-		}
-
 		// Fetch expenses with filters
+		// Note: Category filtering is done after fetching, since getAllExpensesByOrganizationId
+		// doesn't support categoryIds parameter
 		const { expenses, total } = await getAllExpensesByOrganizationId(
 			organizationId,
 			{
-				categoryIds,
 				accountIds,
 				startDate: reportPeriodStart,
 				endDate: reportPeriodEnd,
@@ -105,22 +91,22 @@ export const generateCustomReportProcedure = protectedProcedure
 			},
 		);
 
-	// Filter by category name if reportType is specified
-	let filteredExpenses = expenses;
-	if (reportType !== "all_categories") {
-		const categoryNameMap: Record<string, string> = {
-			subscription: "Subscription",
-			team_salary: "Team Salary",
-			one_time: "One-time",
-			team_member_loan: "Team Member Loan",
-		};
-		const categoryName = categoryNameMap[reportType];
-		if (categoryName) {
-			filteredExpenses = expenses.filter(
-				(e) => e.category?.name === categoryName,
-			);
+		// Filter by category name if reportType is specified
+		let filteredExpenses = expenses;
+		if (reportType !== "all_categories") {
+			const categoryNameMap: Record<string, string> = {
+				subscription: "Subscription",
+				team_salary: "Team Salary",
+				one_time: "One-time",
+				team_member_loan: "Team Member Loan",
+			};
+			const categoryName = categoryNameMap[reportType];
+			if (categoryName) {
+				filteredExpenses = expenses.filter(
+					(e) => e.category?.name === categoryName,
+				);
+			}
 		}
-	}
 
 		// Calculate totals and breakdowns
 		let totalExpenses = 0;
@@ -142,12 +128,12 @@ export const generateCustomReportProcedure = protectedProcedure
 				currencyRates,
 			);
 
-		totalExpenses += convertedAmount;
+			totalExpenses += convertedAmount;
 
-		// Category breakdown
-		const categoryName = expense.category?.name || "Uncategorized";
-		categoryBreakdown[categoryName] =
-			(categoryBreakdown[categoryName] || 0) + convertedAmount;
+			// Category breakdown
+			const categoryName = expense.category?.name || "Uncategorized";
+			categoryBreakdown[categoryName] =
+				(categoryBreakdown[categoryName] || 0) + convertedAmount;
 
 			// Account breakdown
 			const accountName = expense.expenseAccount?.name || "Unknown";
@@ -155,27 +141,27 @@ export const generateCustomReportProcedure = protectedProcedure
 				(accountBreakdown[accountName] || 0) + convertedAmount;
 		}
 
-	// Prepare report data
-	const reportData = {
-		expenses: includeDetails
-			? filteredExpenses.map((e) => ({
-					id: e.id,
-					title: e.title,
-					description: e.description,
-					amount: Number(e.amount),
-					currency: e.currency || e.expenseAccount?.currency,
-					date: e.date,
-					category: e.category?.name || "Uncategorized",
-					account: e.expenseAccount?.name,
-					teamMember: e.teamMember?.name,
-				}))
-			: [],
-		categoryBreakdown,
-		accountBreakdown,
-		totalExpenses,
-		reportCurrency,
-		reportType,
-	};
+		// Prepare report data
+		const reportData = {
+			expenses: includeDetails
+				? filteredExpenses.map((e) => ({
+						id: e.id,
+						title: e.title,
+						description: e.description,
+						amount: Number(e.amount),
+						currency: e.currency || e.expenseAccount?.currency,
+						date: e.date,
+						category: e.category?.name || "Uncategorized",
+						account: e.expenseAccount?.name,
+						teamMember: e.teamMember?.name,
+					}))
+				: [],
+			categoryBreakdown,
+			accountBreakdown,
+			totalExpenses,
+			reportCurrency,
+			reportType,
+		};
 
 		// Create report record
 		const report = await createExpenseReport({

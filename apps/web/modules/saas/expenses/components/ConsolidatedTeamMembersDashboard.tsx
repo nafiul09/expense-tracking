@@ -1,7 +1,7 @@
 "use client";
 
 import { config } from "@repo/config";
-import { formatCurrency } from "@repo/utils";
+import { convertCurrency, formatCurrency } from "@repo/utils";
 import { expensesApi } from "@saas/expenses/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@ui/components/badge";
@@ -36,7 +36,7 @@ import {
 	UsersIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { CreateTeamMemberDialog } from "./CreateTeamMemberDialog";
 import { GenerateReportDialog } from "./GenerateReportDialog";
 
@@ -80,27 +80,136 @@ export default function ConsolidatedTeamMembersDashboard({
 			return {
 				totalMembers: 0,
 				totalMonthlySalaries: 0,
+				salaryBreakdown: [],
 			};
 		}
 
+		const isAllAccounts = filters.accountIds.length === 0;
 		const activeMembers = teamMembers.filter((m) => m.status === "active");
-		const totalMonthlySalaries = activeMembers.reduce((sum, member) => {
-			// Sum salaries from all account associations
-			const accountSalaries =
-				member.accounts?.reduce(
-					(accSum, acc) => accSum + (Number(acc.salary) || 0),
-					0,
-				) || 0;
-			// Also include legacy salary if exists
-			const legacySalary = Number(member.salary) || 0;
-			return sum + accountSalaries + legacySalary;
-		}, 0);
+
+		if (isAllAccounts && expenseAccounts) {
+			// Calculate per-account breakdown
+			const salaryByAccount = new Map<
+				string,
+				{ accountName: string; currency: string; total: number }
+			>();
+
+			for (const account of expenseAccounts) {
+				salaryByAccount.set(account.id, {
+					accountName: account.name,
+					currency: account.currency,
+					total: 0,
+				});
+			}
+
+			for (const member of activeMembers) {
+				// Sum salaries from account associations
+				if (member.accounts) {
+					for (const acc of member.accounts) {
+						const accountId = acc.account.id;
+						const salary = Number(acc.salary) || 0;
+						const existing = salaryByAccount.get(accountId);
+						if (existing) {
+							existing.total += salary;
+						}
+					}
+				}
+				// Legacy salary (if member has businessId)
+				if (member.businessId && member.salary) {
+					const existing = salaryByAccount.get(member.businessId);
+					if (existing) {
+						existing.total += Number(member.salary);
+					}
+				}
+			}
+
+			const breakdown = Array.from(salaryByAccount.values()).filter(
+				(b) => b.total > 0,
+			);
+
+			return {
+				totalMembers: teamMembers.length,
+				totalMonthlySalaries: 0,
+				salaryBreakdown: breakdown,
+			};
+		}
+		// Calculate total for selected accounts in their currency
+		let totalMonthlySalaries = 0;
+		const selectedAccount = expenseAccounts?.find((a) =>
+			filters.accountIds.includes(a.id),
+		);
+		const accountCurrency = selectedAccount?.currency || "USD";
+
+		for (const member of activeMembers) {
+			if (member.accounts) {
+				for (const acc of member.accounts) {
+					if (
+						filters.accountIds.length === 0 ||
+						filters.accountIds.includes(acc.account.id)
+					) {
+						const salary = Number(acc.salary) || 0;
+						const accCurrency = acc.account.currency || "USD";
+						if (accCurrency === accountCurrency) {
+							totalMonthlySalaries += salary;
+						} else {
+							try {
+								const converted = convertCurrency(
+									salary,
+									accCurrency,
+									accountCurrency,
+									currencyRates || [],
+								);
+								totalMonthlySalaries += converted;
+							} catch {
+								totalMonthlySalaries += salary;
+							}
+						}
+					}
+				}
+			}
+			// Legacy salary
+			if (
+				member.businessId &&
+				member.salary &&
+				(filters.accountIds.length === 0 ||
+					filters.accountIds.includes(member.businessId))
+			) {
+				const account = expenseAccounts?.find(
+					(a) => a.id === member.businessId,
+				);
+				const accCurrency = account?.currency || "USD";
+				const salary = Number(member.salary);
+				if (accCurrency === accountCurrency) {
+					totalMonthlySalaries += salary;
+				} else {
+					try {
+						const converted = convertCurrency(
+							salary,
+							accCurrency,
+							accountCurrency,
+							currencyRates || [],
+						);
+						totalMonthlySalaries += converted;
+					} catch {
+						totalMonthlySalaries += salary;
+					}
+				}
+			}
+		}
 
 		return {
 			totalMembers: teamMembers.length,
 			totalMonthlySalaries,
+			salaryBreakdown: [],
 		};
-	}, [teamMembers]);
+	}, [
+		teamMembers,
+		filters.accountIds,
+		expenseAccounts,
+		currencyRates,
+	]);
+
+	const isAllAccountsView = filters.accountIds.length === 0;
 
 	const handleAccountToggle = (accountId: string) => {
 		setFilters((prev) => ({
@@ -136,25 +245,61 @@ export default function ConsolidatedTeamMembersDashboard({
 				</Card>
 				<Card className="p-6">
 					<div className="flex items-center justify-between">
-						<div>
+						<div className="w-full">
 							<p className="text-muted-foreground text-sm">
 								{t(
 									"expenses.teamMembers.consolidated.totalMonthlySalaries",
 								)}
 							</p>
-							<p className="text-2xl font-bold">
-								{formatCurrency(
-									summaryStats.totalMonthlySalaries,
-									config.expenses.defaultBaseCurrency,
-									currencyRates?.find(
-										(r) =>
-											r.toCurrency ===
-											config.expenses.defaultBaseCurrency,
-									),
-								)}
-							</p>
+							{isAllAccountsView &&
+							summaryStats.salaryBreakdown &&
+							summaryStats.salaryBreakdown.length > 0 ? (
+								<div className="space-y-2 mt-2">
+									{summaryStats.salaryBreakdown.map(
+										(breakdown, idx) => (
+											<div
+												key={idx}
+												className="flex justify-between items-center"
+											>
+												<span className="text-sm font-medium">
+													{breakdown.accountName}
+												</span>
+												<span className="text-lg font-bold">
+													{formatCurrency(
+														breakdown.total,
+														breakdown.currency,
+														currencyRates?.find(
+															(r) =>
+																r.toCurrency ===
+																breakdown.currency,
+														),
+													)}
+												</span>
+											</div>
+										),
+									)}
+								</div>
+							) : (
+								<p className="text-2xl font-bold">
+									{(() => {
+										const selectedAccount = expenseAccounts?.find((a) =>
+											filters.accountIds.includes(a.id),
+										);
+										const accountCurrency =
+											selectedAccount?.currency ||
+											config.expenses.defaultBaseCurrency;
+										return formatCurrency(
+											summaryStats.totalMonthlySalaries,
+											accountCurrency,
+											currencyRates?.find(
+												(r) => r.toCurrency === accountCurrency,
+											),
+										);
+									})()}
+								</p>
+							)}
 						</div>
-						<FileTextIcon className="text-muted-foreground size-8" />
+						<FileTextIcon className="text-muted-foreground size-8 ml-4 flex-shrink-0" />
 					</div>
 				</Card>
 			</div>
@@ -290,132 +435,441 @@ export default function ConsolidatedTeamMembersDashboard({
 					</TableHeader>
 					<TableBody>
 						{teamMembers && teamMembers.length > 0 ? (
-							teamMembers.map((member) => {
-								const connectedAccountsCount =
-									member.accounts?.length || 0;
-								const accountNames =
-									member.accounts
-										?.map((acc) => acc.account.name)
-										.join(", ") || "";
+							(() => {
+								if (isAllAccountsView && expenseAccounts) {
+									// Group members by account
+									const membersByAccount = new Map<
+										string,
+										typeof teamMembers
+									>();
 
-								return (
-									<TableRow key={member.id}>
-										<TableCell className="font-medium">
-											{member.name}
-										</TableCell>
-										<TableCell>
-											{member.email || "-"}
-										</TableCell>
-										<TableCell>
-											{member.accounts?.[0]?.position ||
-												member.position ||
-												"-"}
-										</TableCell>
-										<TableCell>
-											{member.accounts?.[0]?.salary
-												? formatCurrency(
-														Number(
-															member.accounts[0]
-																.salary,
-														),
-														config.expenses
-															.defaultBaseCurrency,
-														currencyRates?.find(
-															(r) =>
-																r.toCurrency ===
-																config.expenses
-																	.defaultBaseCurrency,
-														),
+									for (const member of teamMembers) {
+										// Add to accounts based on account associations
+										if (member.accounts) {
+											for (const acc of member.accounts) {
+												const accountId =
+													acc.account.id;
+												if (
+													!membersByAccount.has(
+														accountId,
 													)
-												: member.salary
-													? formatCurrency(
+												) {
+													membersByAccount.set(
+														accountId,
+														[],
+													);
+												}
+												membersByAccount
+													.get(accountId)!
+													.push(member);
+											}
+										}
+										// Legacy: add to businessId account
+										if (member.businessId) {
+											if (
+												!membersByAccount.has(
+													member.businessId,
+												)
+											) {
+												membersByAccount.set(
+													member.businessId,
+													[],
+												);
+											}
+											if (
+												!membersByAccount
+													.get(member.businessId)!
+													.includes(member)
+											) {
+												membersByAccount
+													.get(member.businessId)!
+													.push(member);
+											}
+										}
+									}
+
+									return Array.from(
+										membersByAccount.entries(),
+									).map(([accountId, accountMembers]) => {
+										const account = expenseAccounts.find(
+											(a) => a.id === accountId,
+										);
+										if (!account) return null;
+
+										// Calculate subtotal for this account
+										const activeMembers =
+											accountMembers.filter(
+												(m) => m.status === "active",
+											);
+										let subtotal = 0;
+										for (const member of activeMembers) {
+											if (member.accounts) {
+												for (const acc of member.accounts) {
+													if (
+														acc.account.id ===
+														accountId
+													) {
+														subtotal +=
 															Number(
-																member.salary,
-															),
-															config.expenses
-																.defaultBaseCurrency,
+																acc.salary,
+															) || 0;
+													}
+												}
+											}
+											if (
+												member.businessId ===
+													accountId &&
+												member.salary
+											) {
+												subtotal += Number(
+													member.salary,
+												);
+											}
+										}
+
+										return (
+											<Fragment key={accountId}>
+												<TableRow className="bg-muted/50">
+													<TableCell
+														colSpan={7}
+														className="font-semibold"
+													>
+														{account.name} -{" "}
+														{account.currency}
+													</TableCell>
+												</TableRow>
+												{accountMembers.map(
+													(member) => {
+														const accountAssociation =
+															member.accounts?.find(
+																(acc) =>
+																	acc.account
+																		.id ===
+																	accountId,
+															);
+														const connectedAccountsCount =
+															member.accounts
+																?.length || 0;
+														const accountNames =
+															member.accounts
+																?.map(
+																	(acc) =>
+																		acc
+																			.account
+																			.name,
+																)
+																.join(", ") ||
+															"";
+
+														return (
+															<TableRow
+																key={member.id}
+															>
+																<TableCell className="font-medium">
+																	{
+																		member.name
+																	}
+																</TableCell>
+																<TableCell>
+																	{member.email ||
+																		"-"}
+																</TableCell>
+																<TableCell>
+																	{accountAssociation?.position ||
+																		member.position ||
+																		"-"}
+																</TableCell>
+																<TableCell>
+																	{accountAssociation?.salary
+																		? formatCurrency(
+																				Number(
+																					accountAssociation.salary,
+																				),
+																				account.currency,
+																				currencyRates?.find(
+																					(
+																						r,
+																					) =>
+																						r.toCurrency ===
+																						account.currency,
+																				),
+																			)
+																		: member.businessId ===
+																					accountId &&
+																				member.salary
+																			? formatCurrency(
+																					Number(
+																						member.salary,
+																					),
+																					account.currency,
+																					currencyRates?.find(
+																						(
+																							r,
+																						) =>
+																							r.toCurrency ===
+																							account.currency,
+																					),
+																				)
+																			: "-"}
+																</TableCell>
+																<TableCell>
+																	<div className="flex items-center gap-2">
+																		<Badge variant="outline">
+																			{
+																				connectedAccountsCount
+																			}{" "}
+																			{connectedAccountsCount ===
+																			1
+																				? t(
+																						"expenses.teamMembers.consolidated.account",
+																					)
+																				: t(
+																						"expenses.teamMembers.consolidated.accounts",
+																					)}
+																		</Badge>
+																		{accountNames && (
+																			<span className="text-muted-foreground text-xs">
+																				(
+																				{
+																					accountNames
+																				}
+																				)
+																			</span>
+																		)}
+																	</div>
+																</TableCell>
+																<TableCell>
+																	<Badge
+																		variant={
+																			member.status ===
+																			"active"
+																				? "default"
+																				: "outline"
+																		}
+																	>
+																		{member.status ===
+																		"active"
+																			? t(
+																					"expenses.teamMembers.status.active",
+																				)
+																			: member.status ===
+																					"inactive"
+																				? t(
+																						"expenses.teamMembers.status.inactive",
+																					)
+																				: member.status}
+																	</Badge>
+																</TableCell>
+																<TableCell>
+																	<DropdownMenu>
+																		<DropdownMenuTrigger
+																			asChild
+																		>
+																			<Button
+																				variant="ghost"
+																				size="sm"
+																			>
+																				<MoreVerticalIcon className="size-4" />
+																			</Button>
+																		</DropdownMenuTrigger>
+																		<DropdownMenuContent align="end">
+																			<DropdownMenuItem>
+																				{t(
+																					"expenses.teamMembers.view",
+																				)}
+																			</DropdownMenuItem>
+																			<DropdownMenuItem>
+																				{t(
+																					"expenses.teamMembers.edit",
+																				)}
+																			</DropdownMenuItem>
+																			<DropdownMenuItem className="text-destructive">
+																				{t(
+																					"expenses.teamMembers.delete",
+																				)}
+																			</DropdownMenuItem>
+																		</DropdownMenuContent>
+																	</DropdownMenu>
+																</TableCell>
+															</TableRow>
+														);
+													},
+												)}
+												<TableRow className="border-b-2">
+													<TableCell
+														colSpan={3}
+														className="text-right font-medium"
+													>
+														{t(
+															"expenses.consolidated.subtotal",
+														)}
+														:
+													</TableCell>
+													<TableCell className="font-bold">
+														{formatCurrency(
+															subtotal,
+															account.currency,
 															currencyRates?.find(
 																(r) =>
 																	r.toCurrency ===
-																	config
-																		.expenses
-																		.defaultBaseCurrency,
+																	account.currency,
 															),
-														)
-													: "-"}
-										</TableCell>
-										<TableCell>
-											<div className="flex items-center gap-2">
-												<Badge variant="outline">
-													{connectedAccountsCount}{" "}
-													{connectedAccountsCount ===
-													1
+														)}
+													</TableCell>
+													<TableCell colSpan={3} />
+												</TableRow>
+											</Fragment>
+										);
+									});
+								}
+
+								// Flat table for specific account selection
+								return teamMembers.map((member) => {
+									const connectedAccountsCount =
+										member.accounts?.length || 0;
+									const accountNames =
+										member.accounts
+											?.map((acc) => acc.account.name)
+											.join(", ") || "";
+
+									return (
+										<TableRow key={member.id}>
+											<TableCell className="font-medium">
+												{member.name}
+											</TableCell>
+											<TableCell>
+												{member.email || "-"}
+											</TableCell>
+											<TableCell>
+												{member.accounts?.[0]
+													?.position ||
+													member.position ||
+													"-"}
+											</TableCell>
+											<TableCell>
+												{member.accounts?.[0]?.salary
+													? (() => {
+															const accountCurrency =
+																member
+																	.accounts[0]
+																	.account
+																	.currency ||
+																"USD";
+															return formatCurrency(
+																Number(
+																	member
+																		.accounts[0]
+																		.salary,
+																),
+																accountCurrency,
+																currencyRates?.find(
+																	(r) =>
+																		r.toCurrency ===
+																		accountCurrency,
+																),
+															);
+														})()
+													: member.salary
+														? (() => {
+																const account =
+																	expenseAccounts?.find(
+																		(a) =>
+																			a.id ===
+																			member.businessId,
+																	);
+																const accountCurrency =
+																	account?.currency ||
+																	"USD";
+																return formatCurrency(
+																	Number(
+																		member.salary,
+																	),
+																	accountCurrency,
+																	currencyRates?.find(
+																		(r) =>
+																			r.toCurrency ===
+																			accountCurrency,
+																	),
+																);
+															})()
+														: "-"}
+											</TableCell>
+											<TableCell>
+												<div className="flex items-center gap-2">
+													<Badge variant="outline">
+														{connectedAccountsCount}{" "}
+														{connectedAccountsCount ===
+														1
+															? t(
+																	"expenses.teamMembers.consolidated.account",
+																)
+															: t(
+																	"expenses.teamMembers.consolidated.accounts",
+																)}
+													</Badge>
+													{accountNames && (
+														<span className="text-muted-foreground text-xs">
+															({accountNames})
+														</span>
+													)}
+												</div>
+											</TableCell>
+											<TableCell>
+												<Badge
+													variant={
+														member.status ===
+														"active"
+															? "default"
+															: "outline"
+													}
+												>
+													{member.status === "active"
 														? t(
-																"expenses.teamMembers.consolidated.account",
+																"expenses.teamMembers.status.active",
 															)
-														: t(
-																"expenses.teamMembers.consolidated.accounts",
-															)}
+														: member.status ===
+																"inactive"
+															? t(
+																	"expenses.teamMembers.status.inactive",
+																)
+															: member.status}
 												</Badge>
-												{accountNames && (
-													<span className="text-muted-foreground text-xs">
-														({accountNames})
-													</span>
-												)}
-											</div>
-										</TableCell>
-										<TableCell>
-											<Badge
-												variant={
-													member.status === "active"
-														? "default"
-														: "outline"
-												}
-											>
-												{member.status === "active"
-													? t(
-															"expenses.teamMembers.status.active",
-														)
-													: member.status ===
-															"inactive"
-														? t(
-																"expenses.teamMembers.status.inactive",
-															)
-														: member.status}
-											</Badge>
-										</TableCell>
-										<TableCell>
-											<DropdownMenu>
-												<DropdownMenuTrigger asChild>
-													<Button
-														variant="ghost"
-														size="sm"
+											</TableCell>
+											<TableCell>
+												<DropdownMenu>
+													<DropdownMenuTrigger
+														asChild
 													>
-														<MoreVerticalIcon className="size-4" />
-													</Button>
-												</DropdownMenuTrigger>
-												<DropdownMenuContent align="end">
-													<DropdownMenuItem>
-														{t(
-															"expenses.teamMembers.view",
-														)}
-													</DropdownMenuItem>
-													<DropdownMenuItem>
-														{t(
-															"expenses.teamMembers.edit",
-														)}
-													</DropdownMenuItem>
-													<DropdownMenuItem className="text-destructive">
-														{t(
-															"expenses.teamMembers.delete",
-														)}
-													</DropdownMenuItem>
-												</DropdownMenuContent>
-											</DropdownMenu>
-										</TableCell>
-									</TableRow>
-								);
-							})
+														<Button
+															variant="ghost"
+															size="sm"
+														>
+															<MoreVerticalIcon className="size-4" />
+														</Button>
+													</DropdownMenuTrigger>
+													<DropdownMenuContent align="end">
+														<DropdownMenuItem>
+															{t(
+																"expenses.teamMembers.view",
+															)}
+														</DropdownMenuItem>
+														<DropdownMenuItem>
+															{t(
+																"expenses.teamMembers.edit",
+															)}
+														</DropdownMenuItem>
+														<DropdownMenuItem className="text-destructive">
+															{t(
+																"expenses.teamMembers.delete",
+															)}
+														</DropdownMenuItem>
+													</DropdownMenuContent>
+												</DropdownMenu>
+											</TableCell>
+										</TableRow>
+									);
+								});
+							})()
 						) : (
 							<TableRow>
 								<TableCell

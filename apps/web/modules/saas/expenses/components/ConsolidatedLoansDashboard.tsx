@@ -1,7 +1,11 @@
 "use client";
 
 import { config } from "@repo/config";
-import { formatAmountWithOriginal, formatCurrency } from "@repo/utils";
+import {
+	convertCurrency,
+	formatAmountWithOriginal,
+	formatCurrency,
+} from "@repo/utils";
 import { expensesApi } from "@saas/expenses/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@ui/components/badge";
@@ -27,7 +31,7 @@ import {
 import { format } from "date-fns";
 import { BanknoteIcon, FileTextIcon, PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { GenerateReportDialog } from "./GenerateReportDialog";
 
 interface ConsolidatedLoansDashboardProps {
@@ -95,28 +99,145 @@ export default function ConsolidatedLoansDashboard({
 				totalActive: 0,
 				totalOutstanding: 0,
 				totalPaid: 0,
+				outstandingBreakdown: [],
+				paidBreakdown: [],
 			};
 		}
 
+		const isAllAccounts = filters.accountIds.length === 0;
 		const activeLoans = loans.filter(
 			(l) => l.status === "active" || l.status === "partial",
 		);
-		const totalOutstanding = activeLoans.reduce(
-			(sum, l) => sum + Number(l.currentBalance),
-			0,
+
+		if (isAllAccounts && expenseAccounts) {
+			// Calculate per-account breakdown
+			const outstandingByAccount = new Map<
+				string,
+				{ accountName: string; currency: string; total: number }
+			>();
+			const paidByAccount = new Map<
+				string,
+				{ accountName: string; currency: string; total: number }
+			>();
+
+			for (const account of expenseAccounts) {
+				outstandingByAccount.set(account.id, {
+					accountName: account.name,
+					currency: account.currency,
+					total: 0,
+				});
+				paidByAccount.set(account.id, {
+					accountName: account.name,
+					currency: account.currency,
+					total: 0,
+				});
+			}
+
+			for (const loan of activeLoans) {
+				const accountId = loan.expenseAccountId;
+				const outstanding = Number(loan.currentBalance);
+				const existing = outstandingByAccount.get(accountId);
+				if (existing) {
+					existing.total += outstanding;
+				}
+			}
+
+			for (const loan of loans) {
+				const accountId = loan.expenseAccountId;
+				const principal = Number(loan.principalAmount);
+				const remaining = Number(loan.currentBalance);
+				const paid = principal - remaining;
+				const existing = paidByAccount.get(accountId);
+				if (existing) {
+					existing.total += paid;
+				}
+			}
+
+			const outstandingBreakdown = Array.from(
+				outstandingByAccount.values(),
+			).filter((b) => b.total > 0);
+			const paidBreakdown = Array.from(paidByAccount.values()).filter(
+				(b) => b.total > 0,
+			);
+
+			return {
+				totalActive: activeLoans.length,
+				totalOutstanding: 0,
+				totalPaid: 0,
+				outstandingBreakdown,
+				paidBreakdown,
+			};
+		}
+		// Calculate totals for selected accounts in their currency
+		let totalOutstanding = 0;
+		let totalPaid = 0;
+		const selectedAccount = expenseAccounts?.find((a) =>
+			filters.accountIds.includes(a.id),
 		);
-		const totalPaid = loans.reduce((sum, l) => {
-			const principal = Number(l.principalAmount);
-			const remaining = Number(l.currentBalance);
-			return sum + (principal - remaining);
-		}, 0);
+		const accountCurrency = selectedAccount?.currency || "USD";
+
+		for (const loan of activeLoans) {
+			if (
+				filters.accountIds.length === 0 ||
+				filters.accountIds.includes(loan.expenseAccountId)
+			) {
+				const loanCurrency = loan.expenseAccount?.currency || "USD";
+				const outstanding = Number(loan.currentBalance);
+				if (loanCurrency === accountCurrency) {
+					totalOutstanding += outstanding;
+				} else {
+					try {
+						const converted = convertCurrency(
+							outstanding,
+							loanCurrency,
+							accountCurrency,
+							currencyRates || [],
+						);
+						totalOutstanding += converted;
+					} catch {
+						totalOutstanding += outstanding;
+					}
+				}
+			}
+		}
+
+		for (const loan of loans) {
+			if (
+				filters.accountIds.length === 0 ||
+				filters.accountIds.includes(loan.expenseAccountId)
+			) {
+				const loanCurrency = loan.expenseAccount?.currency || "USD";
+				const principal = Number(loan.principalAmount);
+				const remaining = Number(loan.currentBalance);
+				const paid = principal - remaining;
+				if (loanCurrency === accountCurrency) {
+					totalPaid += paid;
+				} else {
+					try {
+						const converted = convertCurrency(
+							paid,
+							loanCurrency,
+							accountCurrency,
+							currencyRates || [],
+						);
+						totalPaid += converted;
+					} catch {
+						totalPaid += paid;
+					}
+				}
+			}
+		}
 
 		return {
 			totalActive: activeLoans.length,
 			totalOutstanding,
 			totalPaid,
+			outstandingBreakdown: [],
+			paidBreakdown: [],
 		};
-	}, [loans]);
+	}, [loans, filters.accountIds, expenseAccounts, currencyRates]);
+
+	const isAllAccountsView = filters.accountIds.length === 0;
 
 	const handleAccountToggle = (accountId: string) => {
 		setFilters((prev) => ({
@@ -157,46 +278,128 @@ export default function ConsolidatedLoansDashboard({
 				</Card>
 				<Card className="p-6">
 					<div className="flex items-center justify-between">
-						<div>
+						<div className="w-full">
 							<p className="text-muted-foreground text-sm">
 								{t(
 									"expenses.loans.consolidated.totalOutstanding",
 								)}
 							</p>
-							<p className="text-2xl font-bold">
-								{formatCurrency(
-									summaryStats.totalOutstanding,
-									config.expenses.defaultBaseCurrency,
-									currencyRates?.find(
-										(r) =>
-											r.toCurrency ===
-											config.expenses.defaultBaseCurrency,
-									),
-								)}
-							</p>
+							{isAllAccountsView &&
+							summaryStats.outstandingBreakdown &&
+							summaryStats.outstandingBreakdown.length > 0 ? (
+								<div className="space-y-2 mt-2">
+									{summaryStats.outstandingBreakdown.map(
+										(breakdown, idx) => (
+											<div
+												key={idx}
+												className="flex justify-between items-center"
+											>
+												<span className="text-sm font-medium">
+													{breakdown.accountName}
+												</span>
+												<span className="text-lg font-bold">
+													{formatCurrency(
+														breakdown.total,
+														breakdown.currency,
+														currencyRates?.find(
+															(r) =>
+																r.toCurrency ===
+																breakdown.currency,
+														),
+													)}
+												</span>
+											</div>
+										),
+									)}
+								</div>
+							) : (
+								<p className="text-2xl font-bold">
+									{(() => {
+										const selectedAccount =
+											expenseAccounts?.find((a) =>
+												filters.accountIds.includes(
+													a.id,
+												),
+											);
+										const accountCurrency =
+											selectedAccount?.currency ||
+											config.expenses.defaultBaseCurrency;
+										return formatCurrency(
+											summaryStats.totalOutstanding,
+											accountCurrency,
+											currencyRates?.find(
+												(r) =>
+													r.toCurrency ===
+													accountCurrency,
+											),
+										);
+									})()}
+								</p>
+							)}
 						</div>
-						<FileTextIcon className="text-muted-foreground size-8" />
+						<FileTextIcon className="text-muted-foreground size-8 ml-4 flex-shrink-0" />
 					</div>
 				</Card>
 				<Card className="p-6">
 					<div className="flex items-center justify-between">
-						<div>
+						<div className="w-full">
 							<p className="text-muted-foreground text-sm">
 								{t("expenses.loans.consolidated.totalPaid")}
 							</p>
-							<p className="text-2xl font-bold">
-								{formatCurrency(
-									summaryStats.totalPaid,
-									config.expenses.defaultBaseCurrency,
-									currencyRates?.find(
-										(r) =>
-											r.toCurrency ===
-											config.expenses.defaultBaseCurrency,
-									),
-								)}
-							</p>
+							{isAllAccountsView &&
+							summaryStats.paidBreakdown &&
+							summaryStats.paidBreakdown.length > 0 ? (
+								<div className="space-y-2 mt-2">
+									{summaryStats.paidBreakdown.map(
+										(breakdown, idx) => (
+											<div
+												key={idx}
+												className="flex justify-between items-center"
+											>
+												<span className="text-sm font-medium">
+													{breakdown.accountName}
+												</span>
+												<span className="text-lg font-bold">
+													{formatCurrency(
+														breakdown.total,
+														breakdown.currency,
+														currencyRates?.find(
+															(r) =>
+																r.toCurrency ===
+																breakdown.currency,
+														),
+													)}
+												</span>
+											</div>
+										),
+									)}
+								</div>
+							) : (
+								<p className="text-2xl font-bold">
+									{(() => {
+										const selectedAccount =
+											expenseAccounts?.find((a) =>
+												filters.accountIds.includes(
+													a.id,
+												),
+											);
+										const accountCurrency =
+											selectedAccount?.currency ||
+											config.expenses.defaultBaseCurrency;
+										return formatCurrency(
+											summaryStats.totalPaid,
+											accountCurrency,
+											currencyRates?.find(
+												(r) =>
+													r.toCurrency ===
+													accountCurrency,
+											),
+										);
+									})()}
+								</p>
+							)}
 						</div>
-						<PlusIcon className="text-muted-foreground size-8" />
+						<PlusIcon className="text-muted-foreground size-8 ml-4 flex-shrink-0" />
 					</div>
 				</Card>
 			</div>
@@ -405,99 +608,370 @@ export default function ConsolidatedLoansDashboard({
 					</TableHeader>
 					<TableBody>
 						{loans && loans.length > 0 ? (
-							loans.map((loan) => {
-								const principal = Number(loan.principalAmount);
-								const remaining = Number(loan.currentBalance);
-								const paid = principal - remaining;
-								const progress =
-									principal > 0
-										? (paid / principal) * 100
-										: 0;
-								const accountCurrency =
-									loan.expenseAccount?.currency || "USD";
+							(() => {
+								if (isAllAccountsView && expenseAccounts) {
+									// Group loans by account
+									const loansByAccount = new Map<
+										string,
+										typeof loans
+									>();
 
-								// Calculate original amount from baseCurrencyAmount and conversionRate
-								// conversionRate is FROM original currency TO USD
-								// So: baseCurrencyAmount = originalAmount / conversionRate
-								// Therefore: originalAmount = baseCurrencyAmount * conversionRate
-								let originalPrincipal: number | null = null;
-								if (
-									loan.baseCurrencyAmount &&
-									loan.conversionRate
-								) {
-									originalPrincipal =
-										Number(loan.baseCurrencyAmount) *
-										Number(loan.conversionRate);
+									for (const loan of loans) {
+										const accountId = loan.expenseAccountId;
+										if (!loansByAccount.has(accountId)) {
+											loansByAccount.set(accountId, []);
+										}
+										loansByAccount
+											.get(accountId)!
+											.push(loan);
+									}
+
+									return Array.from(
+										loansByAccount.entries(),
+									).map(([accountId, accountLoans]) => {
+										const account = expenseAccounts.find(
+											(a) => a.id === accountId,
+										);
+										if (!account) return null;
+
+										// Calculate subtotals for this account
+										const activeLoans = accountLoans.filter(
+											(l) =>
+												l.status === "active" ||
+												l.status === "partial",
+										);
+										let outstandingSubtotal = 0;
+										let paidSubtotal = 0;
+
+										for (const loan of activeLoans) {
+											outstandingSubtotal += Number(
+												loan.currentBalance,
+											);
+										}
+
+										for (const loan of accountLoans) {
+											const principal = Number(
+												loan.principalAmount,
+											);
+											const remaining = Number(
+												loan.currentBalance,
+											);
+											paidSubtotal +=
+												principal - remaining;
+										}
+
+										return (
+											<Fragment key={accountId}>
+												<TableRow className="bg-muted/50">
+													<TableCell
+														colSpan={8}
+														className="font-semibold"
+													>
+														{account.name} -{" "}
+														{account.currency}
+													</TableCell>
+												</TableRow>
+												{accountLoans.map((loan) => {
+													const principal = Number(
+														loan.principalAmount,
+													);
+													const remaining = Number(
+														loan.currentBalance,
+													);
+													const paid =
+														principal - remaining;
+													const progress =
+														principal > 0
+															? (paid /
+																	principal) *
+																100
+															: 0;
+													const accountCurrency =
+														loan.expenseAccount
+															?.currency || "USD";
+
+													let originalPrincipal:
+														| number
+														| null = null;
+													if (
+														loan.baseCurrencyAmount &&
+														loan.conversionRate
+													) {
+														originalPrincipal =
+															Number(
+																loan.baseCurrencyAmount,
+															) *
+															Number(
+																loan.conversionRate,
+															);
+													}
+
+													return (
+														<TableRow key={loan.id}>
+															<TableCell>
+																<Badge
+																	variant={
+																		loan.loanType ===
+																		"given"
+																			? "default"
+																			: "secondary"
+																	}
+																>
+																	{loan.loanType ===
+																	"given"
+																		? t(
+																				"loans.form.loanGiven",
+																			) ||
+																			"Given"
+																		: t(
+																				"loans.form.loanTaken",
+																			) ||
+																			"Taken"}
+																</Badge>
+															</TableCell>
+															<TableCell className="font-medium">
+																{loan.partyName}
+															</TableCell>
+															<TableCell>
+																{format(
+																	new Date(
+																		loan.loanDate,
+																	),
+																	"MMM dd, yyyy",
+																)}
+															</TableCell>
+															<TableCell>
+																{originalPrincipal !=
+																	null &&
+																loan.currency !==
+																	accountCurrency
+																	? formatAmountWithOriginal(
+																			originalPrincipal,
+																			loan.currency ||
+																				"USD",
+																			accountCurrency,
+																			currencyRates ||
+																				[],
+																			loan.baseCurrencyAmount
+																				? Number(
+																						loan.baseCurrencyAmount,
+																					)
+																				: null,
+																			loan.conversionRate
+																				? Number(
+																						loan.conversionRate,
+																					)
+																				: null,
+																		)
+																	: formatAmountWithOriginal(
+																			principal,
+																			accountCurrency,
+																			accountCurrency,
+																			currencyRates ||
+																				[],
+																			null,
+																			null,
+																		)}
+															</TableCell>
+															<TableCell>
+																{originalPrincipal !=
+																	null &&
+																loan.currency !==
+																	accountCurrency
+																	? (() => {
+																			const remainingRatio =
+																				remaining /
+																				principal;
+																			const originalRemaining =
+																				originalPrincipal! *
+																				remainingRatio;
+																			return formatAmountWithOriginal(
+																				originalRemaining,
+																				loan.currency ||
+																					"USD",
+																				accountCurrency,
+																				currencyRates ||
+																					[],
+																				loan.baseCurrencyAmount
+																					? Number(
+																							loan.baseCurrencyAmount,
+																						) *
+																							remainingRatio
+																					: null,
+																				loan.conversionRate
+																					? Number(
+																							loan.conversionRate,
+																						)
+																					: null,
+																			);
+																		})()
+																	: formatAmountWithOriginal(
+																			remaining,
+																			accountCurrency,
+																			accountCurrency,
+																			currencyRates ||
+																				[],
+																			null,
+																			null,
+																		)}
+															</TableCell>
+															<TableCell>
+																<div className="space-y-1">
+																	<Progress
+																		value={
+																			progress
+																		}
+																		className="w-24"
+																	/>
+																	<span className="text-muted-foreground text-xs">
+																		{progress.toFixed(
+																			0,
+																		)}
+																		%
+																	</span>
+																</div>
+															</TableCell>
+															<TableCell>
+																<Badge variant="secondary">
+																	{loan
+																		.expenseAccount
+																		?.name ||
+																		"-"}
+																</Badge>
+															</TableCell>
+															<TableCell>
+																<Badge
+																	variant={
+																		loan.status ===
+																		"paid"
+																			? "default"
+																			: loan.status ===
+																					"active"
+																				? "secondary"
+																				: "outline"
+																	}
+																>
+																	{loan.status ===
+																	"paid"
+																		? t(
+																				"expenses.loans.status.paid",
+																			)
+																		: loan.status ===
+																				"active"
+																			? t(
+																					"expenses.loans.status.active",
+																				)
+																			: loan.status ===
+																					"partial"
+																				? t(
+																						"expenses.loans.status.partial",
+																					)
+																				: loan.status}
+																</Badge>
+															</TableCell>
+														</TableRow>
+													);
+												})}
+												<TableRow className="border-b-2">
+													<TableCell
+														colSpan={3}
+														className="text-right font-medium"
+													>
+														{t(
+															"expenses.consolidated.subtotal",
+														)}
+														:
+													</TableCell>
+													<TableCell className="font-bold">
+														{formatCurrency(
+															outstandingSubtotal,
+															account.currency,
+															currencyRates?.find(
+																(r) =>
+																	r.toCurrency ===
+																	account.currency,
+															),
+														)}
+													</TableCell>
+													<TableCell className="font-bold">
+														{formatCurrency(
+															paidSubtotal,
+															account.currency,
+															currencyRates?.find(
+																(r) =>
+																	r.toCurrency ===
+																	account.currency,
+															),
+														)}
+													</TableCell>
+													<TableCell colSpan={3} />
+												</TableRow>
+											</Fragment>
+										);
+									});
 								}
 
-								return (
-									<TableRow key={loan.id}>
-										<TableCell>
-											<Badge
-												variant={
-													loan.loanType === "given"
-														? "default"
-														: "secondary"
-												}
-											>
-												{loan.loanType === "given"
-													? t(
-															"loans.form.loanGiven",
-														) || "Given"
-													: t(
-															"loans.form.loanTaken",
-														) || "Taken"}
-											</Badge>
-										</TableCell>
-										<TableCell className="font-medium">
-											{loan.partyName}
-										</TableCell>
-										<TableCell>
-											{format(
-												new Date(loan.loanDate),
-												"MMM dd, yyyy",
-											)}
-										</TableCell>
-										<TableCell>
-											{originalPrincipal != null &&
-											loan.currency !== accountCurrency
-												? formatAmountWithOriginal(
-														originalPrincipal,
-														loan.currency || "USD",
-														accountCurrency,
-														currencyRates || [],
-														loan.baseCurrencyAmount
-															? Number(
-																	loan.baseCurrencyAmount,
-																)
-															: null,
-														loan.conversionRate
-															? Number(
-																	loan.conversionRate,
-																)
-															: null,
-													)
-												: formatAmountWithOriginal(
-														principal,
-														accountCurrency,
-														accountCurrency,
-														currencyRates || [],
-														null,
-														null,
-													)}
-										</TableCell>
-										<TableCell>
-											{originalPrincipal != null &&
-											loan.currency !== accountCurrency
-												? (() => {
-														const remainingRatio =
-															remaining /
-															principal;
-														const originalRemaining =
-															originalPrincipal! *
-															remainingRatio;
-														return formatAmountWithOriginal(
-															originalRemaining,
+								// Flat table for specific account selection
+								return loans.map((loan) => {
+									const principal = Number(
+										loan.principalAmount,
+									);
+									const remaining = Number(
+										loan.currentBalance,
+									);
+									const paid = principal - remaining;
+									const progress =
+										principal > 0
+											? (paid / principal) * 100
+											: 0;
+									const accountCurrency =
+										loan.expenseAccount?.currency || "USD";
+
+									let originalPrincipal: number | null = null;
+									if (
+										loan.baseCurrencyAmount &&
+										loan.conversionRate
+									) {
+										originalPrincipal =
+											Number(loan.baseCurrencyAmount) *
+											Number(loan.conversionRate);
+									}
+
+									return (
+										<TableRow key={loan.id}>
+											<TableCell>
+												<Badge
+													variant={
+														loan.loanType ===
+														"given"
+															? "default"
+															: "secondary"
+													}
+												>
+													{loan.loanType === "given"
+														? t(
+																"loans.form.loanGiven",
+															) || "Given"
+														: t(
+																"loans.form.loanTaken",
+															) || "Taken"}
+												</Badge>
+											</TableCell>
+											<TableCell className="font-medium">
+												{loan.partyName}
+											</TableCell>
+											<TableCell>
+												{format(
+													new Date(loan.loanDate),
+													"MMM dd, yyyy",
+												)}
+											</TableCell>
+											<TableCell>
+												{originalPrincipal != null &&
+												loan.currency !==
+													accountCurrency
+													? formatAmountWithOriginal(
+															originalPrincipal,
 															loan.currency ||
 																"USD",
 															accountCurrency,
@@ -505,72 +979,112 @@ export default function ConsolidatedLoansDashboard({
 															loan.baseCurrencyAmount
 																? Number(
 																		loan.baseCurrencyAmount,
-																	) *
-																		remainingRatio
+																	)
 																: null,
 															loan.conversionRate
 																? Number(
 																		loan.conversionRate,
 																	)
 																: null,
-														);
-													})()
-												: formatAmountWithOriginal(
-														remaining,
-														accountCurrency,
-														accountCurrency,
-														currencyRates || [],
-														null,
-														null,
-													)}
-										</TableCell>
-										<TableCell>
-											<div className="space-y-1">
-												<Progress
-													value={progress}
-													className="w-24"
-												/>
-												<span className="text-muted-foreground text-xs">
-													{progress.toFixed(0)}%
-												</span>
-											</div>
-										</TableCell>
-										<TableCell>
-											<Badge variant="secondary">
-												{loan.expenseAccount?.name ||
-													"-"}
-											</Badge>
-										</TableCell>
-										<TableCell>
-											<Badge
-												variant={
-													loan.status === "paid"
-														? "default"
-														: loan.status ===
-																"active"
-															? "secondary"
-															: "outline"
-												}
-											>
-												{loan.status === "paid"
-													? t(
-															"expenses.loans.status.paid",
 														)
-													: loan.status === "active"
+													: formatAmountWithOriginal(
+															principal,
+															accountCurrency,
+															accountCurrency,
+															currencyRates || [],
+															null,
+															null,
+														)}
+											</TableCell>
+											<TableCell>
+												{originalPrincipal != null &&
+												loan.currency !==
+													accountCurrency
+													? (() => {
+															const remainingRatio =
+																remaining /
+																principal;
+															const originalRemaining =
+																originalPrincipal! *
+																remainingRatio;
+															return formatAmountWithOriginal(
+																originalRemaining,
+																loan.currency ||
+																	"USD",
+																accountCurrency,
+																currencyRates ||
+																	[],
+																loan.baseCurrencyAmount
+																	? Number(
+																			loan.baseCurrencyAmount,
+																		) *
+																			remainingRatio
+																	: null,
+																loan.conversionRate
+																	? Number(
+																			loan.conversionRate,
+																		)
+																	: null,
+															);
+														})()
+													: formatAmountWithOriginal(
+															remaining,
+															accountCurrency,
+															accountCurrency,
+															currencyRates || [],
+															null,
+															null,
+														)}
+											</TableCell>
+											<TableCell>
+												<div className="space-y-1">
+													<Progress
+														value={progress}
+														className="w-24"
+													/>
+													<span className="text-muted-foreground text-xs">
+														{progress.toFixed(0)}%
+													</span>
+												</div>
+											</TableCell>
+											<TableCell>
+												<Badge variant="secondary">
+													{loan.expenseAccount
+														?.name || "-"}
+												</Badge>
+											</TableCell>
+											<TableCell>
+												<Badge
+													variant={
+														loan.status === "paid"
+															? "default"
+															: loan.status ===
+																	"active"
+																? "secondary"
+																: "outline"
+													}
+												>
+													{loan.status === "paid"
 														? t(
-																"expenses.loans.status.active",
+																"expenses.loans.status.paid",
 															)
 														: loan.status ===
-																"partial"
+																"active"
 															? t(
-																	"expenses.loans.status.partial",
+																	"expenses.loans.status.active",
 																)
-															: loan.status}
-											</Badge>
-										</TableCell>
-									</TableRow>
-								);
-							})
+															: loan.status ===
+																	"partial"
+																? t(
+																		"expenses.loans.status.partial",
+																	)
+																: loan.status}
+												</Badge>
+											</TableCell>
+										</TableRow>
+									);
+								});
+							})()
 						) : (
 							<TableRow>
 								<TableCell
